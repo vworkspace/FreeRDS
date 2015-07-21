@@ -45,7 +45,7 @@ set(${MODULE_PREFIX}_SRCS
  
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS ${PULSE_LIBRARY} freerds-rpc winpr)
+set(${MODULE_PREFIX}_LIBS ${PULSE_LIBRARY} pulsecore-${PULSE_VERSION} freerds-rpc winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
@@ -54,7 +54,7 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set(TARGET_FILE ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${MODULE_NAME}.so)
-set(LINK_NAME /usr/${CMAKE_INSTALL_LIBDIR}/pulse-${PULSE_VERSION}/modules/${MODULE_NAME}.so)
+set(LINK_NAME /usr/lib/pulse-${PULSE_VERSION}/modules/${MODULE_NAME}.so)
 
 message(STATUS "Creating symbolic link for pulseaudio sink")
 message(STATUS "TARGET_FILE=${TARGET_FILE}")
