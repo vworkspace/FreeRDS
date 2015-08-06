@@ -310,13 +310,13 @@ void rdpChangeKeyboardControl(DeviceIntPtr pDev, KeybdCtrl *ctrl)
 
 }
 
-int KbdGetProperty(const char* propertyName, const char* defaultValue, char* buffer, int size)
+int KbdGetProperty(const char* kbdFilePath, const char* propertyName, const char* defaultValue, char* buffer, int size)
 {
 	FILE* file;
 	char line[512];
 	int found;
 
-	file = fopen("/etc/sysconfig/keyboard", "r");
+	file = fopen(kbdFilePath, "r");
 	if (!file)
 		return 0;
 
@@ -379,6 +379,7 @@ int rdpKeybdProc(DeviceIntPtr pDevice, int onoff)
 {
 	KeySymsRec keySyms;
 	CARD8 modMap[MAP_LENGTH];
+	const char* kbdFilePath;
 	char command[512];
 	char kbdTable[256];
 	char kbdModel[256];
@@ -394,9 +395,20 @@ int rdpKeybdProc(DeviceIntPtr pDevice, int onoff)
 			KbdDeviceInit(pDevice, &keySyms, modMap);
 
 			/* Default the keyboard model and layout to that of the system. */
-			KbdGetProperty("KEYTABLE", "us", kbdTable, sizeof(kbdTable));
-			KbdGetProperty("MODEL", "pc104", kbdModel, sizeof(kbdModel));
-			KbdGetProperty("LAYOUT", "us", kbdLayout, sizeof(kbdLayout));
+			kbdFilePath = "/etc/sysconfig/keyboard";  /* CentOS + Redhat */
+			if (PathFileExistsA(kbdFilePath))
+			{
+				KbdGetProperty(kbdFilePath, "KEYTABLE", "us", kbdTable, sizeof(kbdTable));
+				KbdGetProperty(kbdFilePath, "MODEL", "pc104", kbdModel, sizeof(kbdModel));
+				KbdGetProperty(kbdFilePath, "LAYOUT", "us", kbdLayout, sizeof(kbdLayout));
+			}
+
+			kbdFilePath = "/etc/default/keyboard";  /* Debian */
+			if (PathFileExistsA(kbdFilePath))
+			{
+				KbdGetProperty(kbdFilePath, "XKBMODEL", "pc104", kbdModel, sizeof(kbdModel));
+				KbdGetProperty(kbdFilePath, "XKBLAYOUT", "us", kbdLayout, sizeof(kbdLayout));
+			}
 
 			ZeroMemory(&set, sizeof(set));
 			set.rules = "evdev";
