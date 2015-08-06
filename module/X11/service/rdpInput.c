@@ -31,6 +31,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/input.h>
+#include <winpr/path.h>
 
 #include "rdpInput.h"
 
