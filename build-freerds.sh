@@ -33,8 +33,8 @@
 GIT_ROOT_DIR=~/git/vworkspace
 FREERDP_GIT=https://github.com/vworkspace/FreeRDP.git
 FREERDS_GIT=https://github.com/vworkspace/FreeRDS.git
-FREERDP_BRANCH=master
-FREERDS_BRANCH=master
+FREERDP_BRANCH=awakecoding
+FREERDS_BRANCH=awakecoding
 FREERDS_INSTALL_DIR=/opt/FreeRDS
 
 #
