@@ -32,7 +32,11 @@ Bool rdpRealizeWindow(WindowPtr pWindow);
 Bool rdpUnrealizeWindow(WindowPtr pWindow);
 int rdpValidateTree(WindowPtr pParent, WindowPtr pChild, VTKind kind);
 void rdpPostValidateTree(WindowPtr pParent, WindowPtr pChild, VTKind kind);
+#if (XORG_VERSION_CURRENT < XORG_VERSION(1,17,0))
 void rdpWindowExposures(WindowPtr pWindow, RegionPtr prgn, RegionPtr other_exposed);
+#else
+void rdpWindowExposures(WindowPtr pWindow, RegionPtr prgns);
+#endif
 void rdpCopyWindow(WindowPtr pWindow, DDXPointRec ptOldOrg, RegionPtr prgnSrc);
 void rdpClearToBackground(WindowPtr pWin, int x, int y, int w, int h, Bool generateExposures);
 void rdpClipNotify(WindowPtr pWindow, int dx, int dy);
