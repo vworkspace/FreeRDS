@@ -148,7 +148,11 @@ void rdpPostValidateTree(WindowPtr pParent, WindowPtr pChild, VTKind kind)
 
 }
 
+#if (XORG_VERSION_CURRENT < XORG_VERSION(1,17,0))
 void rdpWindowExposures(WindowPtr pWindow, RegionPtr prgn, RegionPtr other_exposed)
+#else
+void rdpWindowExposures(WindowPtr pWindow, RegionPtr prgn)
+#endif
 {
 	ScreenPtr pScreen;
 	//rdpWindowRec* priv;
@@ -159,7 +163,11 @@ void rdpWindowExposures(WindowPtr pWindow, RegionPtr prgn, RegionPtr other_expos
 
 	pScreen = pWindow->drawable.pScreen;
 	pScreen->WindowExposures = g_rdpScreen.WindowExposures;
+#if (XORG_VERSION_CURRENT < XORG_VERSION(1,17,0))
 	pScreen->WindowExposures(pWindow, prgn, other_exposed);
+#else
+	pScreen->WindowExposures(pWindow, prgn);
+#endif
 
 	pScreen->WindowExposures = rdpWindowExposures;
 }

@@ -167,6 +167,8 @@ set_source_files_properties(${${MODULE_PREFIX}_XORG_XSERVER_SRCS} GENERATED)
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_XORG_XSERVER_SRCS})
 
+add_definitions("-DHAVE_DIX_CONFIG_H")
+
 add_library("composite-static" STATIC IMPORTED)
 set_property(TARGET "composite-static" PROPERTY IMPORTED_LOCATION "${XOBJBASE}/composite/.libs/libcomposite.a")
 

@@ -54,6 +54,7 @@ int rdp_get_clip(RegionPtr pRegion, DrawablePtr pDrawable, GCPtr pGC)
 
 	if (pDrawable->type == DRAWABLE_PIXMAP)
 	{
+#if (XORG_VERSION_CURRENT < XORG_VERSION(1,17,0))
 		switch (pGC->clientClipType)
 		{
 			case CT_NONE:
@@ -69,6 +70,17 @@ int rdp_get_clip(RegionPtr pRegion, DrawablePtr pDrawable, GCPtr pGC)
 				ErrorF("unimp clip type %d\n", pGC->clientClipType);
 				break;
 		}
+#else
+		if (pGC->clientClip)
+		{
+			status = 2;
+			RegionCopy(pRegion, pGC->clientClip);
+		}
+		else
+		{
+			status = 1;
+		}
+#endif
 
 		if (status == 2) /* check if the clip is the entire pixmap */
 		{
@@ -100,6 +112,7 @@ int rdp_get_clip(RegionPtr pRegion, DrawablePtr pDrawable, GCPtr pGC)
 
 			if (RegionNotEmpty(temp))
 			{
+#if (XORG_VERSION_CURRENT < XORG_VERSION(1,17,0))
 				switch (pGC->clientClipType)
 				{
 					case CT_NONE:
@@ -120,6 +133,22 @@ int rdp_get_clip(RegionPtr pRegion, DrawablePtr pDrawable, GCPtr pGC)
 						ErrorF("unimp clip type %d\n", pGC->clientClipType);
 						break;
 				}
+#else
+				if (pGC->clientClip)
+				{
+					status = 2;
+					RegionCopy(pRegion, pGC->clientClip);
+					RegionTranslate(pRegion,
+							pDrawable->x + pGC->clipOrg.x,
+							pDrawable->y + pGC->clipOrg.y);
+					RegionIntersect(pRegion, pRegion, temp);
+				}
+				else
+				{
+					status = 2;
+					RegionCopy(pRegion, temp);
+				}
+#endif
 
 				if (status == 2) /* check if the clip is the entire screen */
 				{
