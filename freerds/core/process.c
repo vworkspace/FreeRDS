@@ -98,6 +98,11 @@ BOOL freerds_peer_post_connect(freerdp_peer* client)
 	}
 	fprintf(stderr, "\n");
 
+	if (client->settings->KeyboardType == 7)
+	{
+		client->settings->KeyboardType = 4;
+	}
+
 	DesktopWidth = settings->DesktopWidth;
 	DesktopHeight = settings->DesktopHeight;
 	ColorDepth = settings->ColorDepth;
