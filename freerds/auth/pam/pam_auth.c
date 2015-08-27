@@ -51,6 +51,10 @@ static void get_service_name(char* service_name)
 	{
 		strncpy(service_name, "freerds", 255);
 	}
+	else if (PathFileExistsA("/etc/pam.d/common-auth"))
+	{
+		strncpy(service_name, "common-auth", 255);
+	}
 	else if (PathFileExistsA("/etc/pam.d/gdm-password"))
 	{
 		strncpy(service_name, "gdm-password", 255);
