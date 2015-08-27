@@ -254,12 +254,12 @@ static void fire_session_event(int event)
 	if ((event == WTS_EVENT_LOGON) || (event == WTS_EVENT_LOGOFF))
 	{
 		char service_name[128];
-		char username[128];
+		const char *username;
 		struct pam_conv pamc;
 		pam_handle_t *pamh;
 		int pam_status;
 
-		getlogin_r(username, sizeof(username));
+		username = getenv("USER");
 
 		pam_get_service_name(service_name, sizeof(service_name));
 
