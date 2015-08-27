@@ -28,7 +28,7 @@ set(${MODULE_PREFIX}_SRCS
  
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS winpr)
+set(${MODULE_PREFIX}_LIBS winpr pam)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
