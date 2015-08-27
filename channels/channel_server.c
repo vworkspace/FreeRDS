@@ -18,10 +18,17 @@
  */
 
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <security/pam_appl.h>
 
 #include <winpr/collections.h>
 #include <winpr/file.h>
 #include <winpr/library.h>
+#include <winpr/path.h>
 #include <winpr/wlog.h>
 #include <winpr/wtsapi.h>
 #include <winpr/wtypes.h>
@@ -212,11 +219,79 @@ static void unload_vc_plugins()
 	g_pluginList = NULL;
 }
 
+static void pam_get_service_name(char *service_name, int service_name_length)
+{
+	if (PathFileExistsA("/etc/pam.d/freerds"))
+	{
+		strncpy(service_name, "freerds", service_name_length);
+	}
+	else if (PathFileExistsA("/etc/pam.d/common-session"))
+	{
+		strncpy(service_name, "common-session", service_name_length);
+	}
+	else
+	{
+		strncpy(service_name, "gdm", service_name_length);
+	}
+}
+
+static int pam_conversation(
+	int num_msgs,
+	const struct pam_message **msg,
+	struct pam_response **resp,
+	void *data
+)
+{
+	return PAM_SUCCESS;
+}
+
 static void fire_session_event(int event)
 {
 	int count;
 	int i;
 
+	/* Invoke PAM to deliver open_session and close_session */
+	if ((event == WTS_EVENT_LOGON) || (event == WTS_EVENT_LOGOFF))
+	{
+		char service_name[128];
+		char username[128];
+		struct pam_conv pamc;
+		pam_handle_t *pamh;
+		int pam_status;
+
+		getlogin_r(username, sizeof(username));
+
+		pam_get_service_name(service_name, sizeof(service_name));
+
+		pamc.conv = &pam_conversation;
+		pamc.appdata_ptr = NULL;
+
+		pam_status = pam_start(service_name, username, &pamc, &pamh);
+		if (pam_status == PAM_SUCCESS)
+		{
+			switch (event)
+			{
+				case WTS_EVENT_LOGON:
+					pam_open_session(pamh, PAM_SILENT);
+					break;
+
+				case WTS_EVENT_LOGOFF:
+					pam_close_session(pamh, PAM_SILENT);
+					break;
+
+				default:
+					break;
+			}
+
+			pam_end(pamh, PAM_SUCCESS);
+		}
+		else
+		{
+			WLog_Print(g_logger, WLOG_ERROR, "error calling pam_start");
+		}
+	}
+
+	/* Deliver the event to every plugin. */
 	count = ArrayList_Count(g_pluginList);
 
 	for (i = 0; i < count; i++)
