@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <grp.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +31,7 @@
 #include <winpr/file.h>
 #include <winpr/library.h>
 #include <winpr/path.h>
+#include <winpr/string.h>
 #include <winpr/wlog.h>
 #include <winpr/wtsapi.h>
 #include <winpr/wtypes.h>
@@ -245,49 +248,88 @@ static int pam_conversation(
 	return PAM_SUCCESS;
 }
 
+static uid_t g_savedUID;
+static gid_t g_savedGID;
+
+static void impersonate_user(const char *username)
+{
+	struct passwd *passwd;
+
+	WLog_Print(g_logger, WLOG_INFO, "impersonating user '%s'", username);
+
+	passwd = getpwnam(username);
+	if (passwd)
+	{
+		g_savedUID = getuid();
+		g_savedGID = getgid();
+
+		initgroups(passwd->pw_name, passwd->pw_gid);
+		setgid(passwd->pw_gid);
+		setuid(passwd->pw_uid);
+	}
+}
+
+static void revert_to_self()
+{
+	struct passwd *passwd;
+
+	WLog_Print(g_logger, WLOG_INFO, "reverting to self");
+
+	passwd = getpwuid(0);
+	if (passwd)
+	{
+		setuid(g_savedUID);
+		setgid(g_savedGID);
+		initgroups(passwd->pw_name, passwd->pw_gid);
+	}
+}
+
 static void fire_session_event(int event)
 {
+	const char *username;
 	int count;
 	int i;
+
+	username = getenv("USER");
 
 	/* Invoke PAM to deliver open_session and close_session */
 	if ((event == WTS_EVENT_LOGON) || (event == WTS_EVENT_LOGOFF))
 	{
 		char service_name[128];
-		const char *username;
 		struct pam_conv pamc;
 		pam_handle_t *pamh;
 		int pam_status;
 
-		username = getenv("USER");
-
-		pam_get_service_name(service_name, sizeof(service_name));
-
-		pamc.conv = &pam_conversation;
-		pamc.appdata_ptr = NULL;
-
-		pam_status = pam_start(service_name, username, &pamc, &pamh);
-		if (pam_status == PAM_SUCCESS)
+		if (username && (strlen(username) > 0))
 		{
-			switch (event)
+			pam_get_service_name(service_name, sizeof(service_name));
+
+			pamc.conv = &pam_conversation;
+			pamc.appdata_ptr = NULL;
+
+			pam_status = pam_start(service_name, username, &pamc, &pamh);
+			if (pam_status == PAM_SUCCESS)
 			{
-				case WTS_EVENT_LOGON:
-					pam_open_session(pamh, PAM_SILENT);
-					break;
+				switch (event)
+				{
+					case WTS_EVENT_LOGON:
+						pam_open_session(pamh, PAM_SILENT);
+						break;
 
-				case WTS_EVENT_LOGOFF:
-					pam_close_session(pamh, PAM_SILENT);
-					break;
+					case WTS_EVENT_LOGOFF:
+						pam_close_session(pamh, PAM_SILENT);
+						break;
 
-				default:
-					break;
+					default:
+						break;
+				}
+
+				pam_end(pamh, PAM_SUCCESS);
 			}
-
-			pam_end(pamh, PAM_SUCCESS);
-		}
-		else
-		{
-			WLog_Print(g_logger, WLOG_ERROR, "error calling pam_start");
+			else
+			{
+				WLog_Print(g_logger, WLOG_ERROR, "error calling pam_start");
+			}
 		}
 	}
 
@@ -297,9 +339,30 @@ static void fire_session_event(int event)
 	for (i = 0; i < count; i++)
 	{
 		VCPlugin *pVCPlugin;
+		BOOL impersonate;
 
 		pVCPlugin = (VCPlugin *) ArrayList_GetItem(g_pluginList, i);
 
+		/* Determine if impersonation is required. */
+
+		/* TODO: Right now we only impersonate on RDPDR for the logon */
+		/*   and logoff events.  In the next version of FreeRDS, we need */
+		/*   have the virtual channel plugin advertise whether or not */
+		/*   impersonation is required. */
+		impersonate = FALSE;
+		if (((event == WTS_EVENT_LOGON) || (event == WTS_EVENT_LOGOFF)) &&
+			(_stricmp(pVCPlugin->name, "RDPDR") == 0))
+		{
+			impersonate = TRUE;
+		}
+
+		/* Impersonate the logged on user. */
+		if (impersonate)
+		{
+			impersonate_user(username);
+		}
+
+		/* Deliver the event. */
 		switch (event)
 		{
 			case WTS_EVENT_CREATE:
@@ -346,6 +409,12 @@ static void fire_session_event(int event)
 
 			default:
 				break;
+		}
+
+		/* Stop impersonatation. */
+		if (impersonate)
+		{
+			revert_to_self();
 		}
 	}
 }
