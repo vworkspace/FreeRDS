@@ -29,6 +29,7 @@ extern "C" {
 
 ULONG channel_utils_get_session_id();
 WTS_CONNECTSTATE_CLASS channel_utils_get_session_state();
+BOOL channel_utils_get_username(char *pszUsername, int cbUsername);
 
 ULONG channel_utils_get_x11_display_num();
 

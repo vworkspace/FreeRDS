@@ -73,6 +73,31 @@ WTS_CONNECTSTATE_CLASS channel_utils_get_session_state()
 	return sessionState;
 }
 
+BOOL channel_utils_get_username(char *pszUsername, int cbUsername)
+{
+	BOOL bSuccess;
+	LPSTR pszBuffer;
+	DWORD cbBuffer;
+
+	ZeroMemory(pszUsername, cbUsername);
+
+	bSuccess = WTSQuerySessionInformation(
+		WTS_CURRENT_SERVER_HANDLE,
+		WTS_CURRENT_SESSION,
+		WTSConnectState,
+		&pszBuffer,
+		&cbBuffer);
+
+	if (bSuccess)
+	{
+		CopyMemory(pszUsername, pszBuffer, cbBuffer);
+
+		WTSFreeMemory(pszBuffer);
+	}
+
+	return bSuccess;
+}
+
 ULONG channel_utils_get_x11_display_num()
 {
     int index;
