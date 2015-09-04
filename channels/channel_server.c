@@ -350,11 +350,13 @@ static void fire_session_event(int event)
 		/*   have the virtual channel plugin advertise whether or not */
 		/*   impersonation is required. */
 		impersonate = FALSE;
+#if 0
 		if (((event == WTS_EVENT_LOGON) || (event == WTS_EVENT_LOGOFF)) &&
 			(_stricmp(pVCPlugin->name, "RDPDR") == 0))
 		{
 			impersonate = TRUE;
 		}
+#endif
 
 		/* Impersonate the logged on user. */
 		if (impersonate)
