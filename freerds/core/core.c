@@ -98,37 +98,6 @@ int freerds_send_bitmap_update(rdsConnection* connection, int bpp, RDS_MSG_PAINT
 	nWidth = msg->nWidth;
 	nHeight = msg->nHeight;
 
-	/* Clip the rectangle to the confines of the frame buffer. */
-	if (nXSrc < 0)
-	{
-		nWidth += nXSrc;
-		nXSrc = 0;
-	}
-
-	if (nYSrc < 0)
-	{
-		nHeight += nYSrc;
-		nYSrc = 0;
-	}
-
-	extra = (nXSrc + nWidth) - msg->framebuffer->fbWidth;
-	if (extra > 0)
-	{
-		nWidth -= extra;
-	}
-
-	extra = (nYSrc + nHeight) - msg->framebuffer->fbHeight;
-	if (extra > 0)
-	{
-		nHeight -= extra;
-	} 
-
-	if ((nWidth <= 0) || (nHeight <= 0))
-	{
-		/* Nothing to do. */
-		return 1;
-	}
-
 	context = (rdpContext*) connection;
 	update = context->update;
 
@@ -181,6 +150,37 @@ int freerds_send_bitmap_update(rdsConnection* connection, int bpp, RDS_MSG_PAINT
 	{
 		nYSrc -= (nHeight % 4);
 		nHeight += (nHeight % 4);
+	}
+
+	/* Clip the rectangle to the confines of the frame buffer. */
+	if (nXSrc < 0)
+	{
+		nWidth += nXSrc;
+		nXSrc = 0;
+	}
+
+	if (nYSrc < 0)
+	{
+		nHeight += nYSrc;
+		nYSrc = 0;
+	}
+
+	extra = (nXSrc + nWidth) - msg->framebuffer->fbWidth;
+	if (extra > 0)
+	{
+		nWidth -= extra;
+	}
+
+	extra = (nYSrc + nHeight) - msg->framebuffer->fbHeight;
+	if (extra > 0)
+	{
+		nHeight -= extra;
+	} 
+
+	if ((nWidth <= 0) || (nHeight <= 0))
+	{
+		/* Nothing to do. */
+		return 1;
 	}
 
 	for (yIdx = 0; yIdx < rows; yIdx++)
