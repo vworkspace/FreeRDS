@@ -114,9 +114,12 @@ int freerds_client_check_event_handles(rdsBackend* backend)
 	rdsBackendConnector* connector = (rdsBackendConnector*) backend;
 
 	if (!connector)
-		return 0;
+		return -1;
 
 	connection = connector->connection;
+
+	if (WaitForSingleObject(connector->ServerThread, 0) == WAIT_OBJECT_0)
+		return -1;
 
 	while (WaitForSingleObject(MessageQueue_Event(connector->ServerQueue), 0) == WAIT_OBJECT_0)
 	{
