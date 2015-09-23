@@ -440,6 +440,7 @@ void* freerds_connection_main_thread(void* arg)
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[128];
+	BOOL bServerClose;
 	HANDLE ClientEvent;
 	HANDLE ChannelEvent;
 	HANDLE LocalTermEvent;
@@ -455,6 +456,8 @@ void* freerds_connection_main_thread(void* arg)
 #endif
 
 	fprintf(stderr, "We've got a client %s\n", client->hostname);
+
+	bServerClose = FALSE;
 
 	connection = (rdsConnection*) client->context;
 	settings = client->settings;
@@ -556,6 +559,7 @@ void* freerds_connection_main_thread(void* arg)
 				if (connector->CheckEventHandles((rdsBackend*) connector) < 0)
 				{
 					fprintf(stderr, "ModuleClient->CheckEventHandles failure\n");
+					bServerClose = TRUE;
 					break;
 				}
 			}
@@ -586,7 +590,14 @@ void* freerds_connection_main_thread(void* arg)
 		freerds_icp_DisconnectUserSession(&request, &response);
 	}
 
-	client->Disconnect(client);
+	if (bServerClose)
+	{
+		client->Close(client);
+	}
+	else
+	{
+		client->Disconnect(client);
+	}
 	freerds_server_remove_connection(g_Server, connection->id);
 
 	freerdp_peer_context_free(client);

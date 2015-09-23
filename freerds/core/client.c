@@ -118,9 +118,6 @@ int freerds_client_check_event_handles(rdsBackend* backend)
 
 	connection = connector->connection;
 
-	if (WaitForSingleObject(connector->ServerThread, 0) == WAIT_OBJECT_0)
-		return -1;
-
 	while (WaitForSingleObject(MessageQueue_Event(connector->ServerQueue), 0) == WAIT_OBJECT_0)
 	{
 		if (!connection->client->activated)
@@ -128,6 +125,9 @@ int freerds_client_check_event_handles(rdsBackend* backend)
 
 		status = freerds_message_server_queue_process_pending_messages(connector);
 	}
+
+	if (WaitForSingleObject(connector->ServerThread, 0) == WAIT_OBJECT_0)
+		return -1;
 
 	return status;
 }
