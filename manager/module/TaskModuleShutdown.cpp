@@ -35,33 +35,16 @@ namespace freerds
 	{
 		UINT32 connectionId = APP_CONTEXT.getConnectionStore()->getConnectionIdForSessionId(m_SessionId);
 
-		if (connectionId == 0)
-		{
-			// no connection found for this session ... just shut down!
-			stopSession();
-		}
-		else
+		stopSession();
+
+		if (connectionId != 0)
 		{
 			CallOutLogOffUserSession logoffSession;
 			logoffSession.setConnectionId(connectionId);
 			APP_CONTEXT.getRpcOutgoingQueue()->addElement(&logoffSession);
 			WaitForSingleObject(logoffSession.getAnswerHandle(),INFINITE);
 
-			if (logoffSession.getResult() == 0)
-			{
-				// no error
-				if (logoffSession.isLoggedOff()) {
-					stopSession();
-					APP_CONTEXT.getConnectionStore()->removeConnection(connectionId);
-				} else {
-					WLog_Print(logger_TaskModuleShutdown, WLOG_ERROR, "CallOutLogOffUserSession reported that logoff in freerds was not successful!");
-				}
-			}
-			else
-			{
-				// report error
-				WLog_Print(logger_TaskModuleShutdown, WLOG_ERROR, "CallOutLogOffUserSession reported error %d!", logoffSession.getResult());
-			}
+			APP_CONTEXT.getConnectionStore()->removeConnection(connectionId);
 		}
 	}
 
