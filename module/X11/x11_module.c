@@ -135,6 +135,16 @@ void monitoring_thread(void* arg)
 		}
 	}
 
+	if (x11->X11ProcessInformation.hProcess)
+	{
+		kill(x11->X11ProcessInformation.dwProcessId, SIGTERM);
+		if (waitpid(x11->X11ProcessInformation.dwProcessId, &status, 0) != 0)
+		{
+			ret = clean_up_process(&(x11->X11ProcessInformation));
+			WLog_Print(gModuleLog, WLOG_DEBUG, "s %d: X11 process exited with %d (monitoring thread)", x11->commonModule.sessionId, ret);
+		}
+	}
+
 	if (x11->CSProcessInformation.hProcess)
 	{
 		kill(x11->CSProcessInformation.dwProcessId, SIGTERM);
@@ -142,6 +152,16 @@ void monitoring_thread(void* arg)
 		{
 			ret = clean_up_process(&(x11->CSProcessInformation));
 			WLog_Print(gModuleLog, WLOG_DEBUG, "s %d: CS process exited with %d (monitoring thread)", x11->commonModule.sessionId, ret);
+		}
+	}
+
+	if (x11->WMProcessInformation.hProcess)
+	{
+		kill(x11->WMProcessInformation.dwProcessId, SIGTERM);
+		if (waitpid(x11->WMProcessInformation.dwProcessId, &status, 0) != 0)
+		{
+			ret = clean_up_process(&(x11->WMProcessInformation));
+			WLog_Print(gModuleLog, WLOG_DEBUG, "s %d: WM process exited with %d (monitoring thread)", x11->commonModule.sessionId, ret);
 		}
 	}
 
