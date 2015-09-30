@@ -42,7 +42,7 @@ namespace freerds
 			CallOutLogOffUserSession logoffSession;
 			logoffSession.setConnectionId(connectionId);
 			APP_CONTEXT.getRpcOutgoingQueue()->addElement(&logoffSession);
-			WaitForSingleObject(logoffSession.getAnswerHandle(),INFINITE);
+			WaitForSingleObject(logoffSession.getAnswerHandle(), 5000);
 
 			APP_CONTEXT.getConnectionStore()->removeConnection(connectionId);
 		}
