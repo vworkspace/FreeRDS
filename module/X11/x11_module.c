@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -240,6 +241,40 @@ unsigned int detect_free_display()
 	return i;
 }
 
+static char *trim_string(char *string)
+{
+	char *p;
+
+	if (string == NULL) return string;
+
+	/* Trim whitespace from the left of the string. */
+	while ((*string != '\0') && isspace(*string)) string++;
+
+	/* Trim whitespace from the right of the string. */
+	p = string + strlen(string) - 1;
+	while ((p >= string) && isspace(*p)) *p-- = '\0';
+
+	return string;
+}
+
+static char *unquote_string(char *string)
+{
+	string = trim_string(string);
+
+	if (string == NULL) return string;
+
+	if (*string == '"')
+	{
+		int length;
+
+		string++;
+		length = strlen(string);
+		*(string + length - 1) = '\0';
+	}
+
+	return string;
+}
+
 char* x11_rds_module_start(RDS_MODULE_COMMON* module)
 {
 	static const char* envNames[] = {
@@ -262,6 +297,7 @@ char* x11_rds_module_start(RDS_MODULE_COMMON* module)
 	char* lpCurrentDir;
 	char startupname[256];
 	DWORD cchSize;
+	FILE* file;
 	int i;
 
 	x11 = (rdsModuleX11*) module;
@@ -298,6 +334,40 @@ char* x11_rds_module_start(RDS_MODULE_COMMON* module)
 	{
 		WLog_Print(gModuleLog, WLOG_DEBUG, "HOME=%s", currentDir);
 		lpCurrentDir = currentDir;
+	}
+
+	/* Extract environment variables from /etc/environment. */
+	file = fopen("/etc/environment", "r");
+	if (file)
+	{
+		char line[2048];
+
+		while (fgets(line, sizeof(line), file))
+		{
+			char *token;
+
+			token = strstr(line, "=");
+			if (token)
+			{
+				char *name;
+				char *value;
+
+				*token = '\0';
+				name = line;
+				value = token + 1;
+
+				/* Remove whitespace from the environment variable name. */
+				name = trim_string(name);
+
+				/* Remove whitespace and unquote the environment variable value. */
+				value = unquote_string(value);
+
+				/* Set the environment variable. */
+				SetEnvironmentVariableEBA(&x11->commonModule.envBlock, name, value);
+			}
+		}
+
+		fclose(file);
 	}
 
 	/* Propagate environment variables. */
