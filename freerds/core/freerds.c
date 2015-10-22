@@ -49,6 +49,8 @@
 
 #include "rpc.h"
 
+#define TAG "freerds.server"
+
 extern rdsServer* g_Server;
 
 static HANDLE g_TermEvent = NULL;
@@ -93,8 +95,8 @@ void freerds_shutdown(int sig)
 
 	threadId = GetCurrentThreadId();
 
-	printf("shutting down\n");
-	printf("signal %d threadId %d\n", sig, (int) threadId);
+	WLog_INFO(TAG, "shutting down");
+	WLog_INFO(TAG, "signal %d threadId %d", sig, (int) threadId);
 
 	if (WaitForSingleObject(g_TermEvent, 0) != WAIT_OBJECT_0)
 		SetEvent(g_TermEvent);
@@ -120,7 +122,7 @@ HANDLE g_get_term_event(void)
 
 void pipe_sig(int sig_num)
 {
-	printf("FreeRDS SIGPIPE (%d)\n", sig_num);
+	WLog_INFO(TAG, "FreeRDS SIGPIPE (%d)", sig_num);
 }
 
 int main(int argc, char** argv)

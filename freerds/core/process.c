@@ -27,6 +27,7 @@
 #include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -42,6 +43,8 @@
 
 #include "rpc.h"
 #include "channels.h"
+
+#define TAG "freerds.server.process"
 
 extern rdsServer* g_Server;
 
@@ -85,18 +88,17 @@ BOOL freerds_peer_post_connect(freerdp_peer* client)
 	connection = (rdsConnection*) client->context;
 	connector = connection->connector;
 
-	fprintf(stderr, "Client %s is connected", client->hostname);
+	WLog_INFO(TAG, "Client %s is connected", client->hostname);
 
 	if (settings->Username && settings->Password)
 		settings->AutoLogonEnabled = TRUE;
 
 	if (client->settings->AutoLogonEnabled)
 	{
-		fprintf(stderr, " and wants to login automatically as %s\\%s",
+		WLog_INFO(TAG, "Client wants to login automatically as %s\\%s",
 			client->settings->Domain ? client->settings->Domain : "",
 			client->settings->Username);
 	}
-	fprintf(stderr, "\n");
 
 	if (client->settings->KeyboardType == 7)
 	{
@@ -110,13 +112,13 @@ BOOL freerds_peer_post_connect(freerdp_peer* client)
 	if (settings->MultifragMaxRequestSize < 0x3F0000)
 		settings->NSCodec = FALSE; /* NSCodec compressor does not support fragmentation yet */
 
-	fprintf(stderr, "Client requested desktop: %dx%dx%d\n",
+	WLog_INFO(TAG, "Client requested desktop: %dx%dx%d",
 		settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
 	if ((DesktopWidth != settings->DesktopWidth) || (DesktopHeight != settings->DesktopHeight)
 			|| (ColorDepth != settings->ColorDepth))
 	{
-		fprintf(stderr, "Resizing desktop to %dx%dx%d\n", DesktopWidth, DesktopHeight, ColorDepth);
+		WLog_INFO(TAG, "Resizing desktop to %dx%dx%d", DesktopWidth, DesktopHeight, ColorDepth);
 
 		settings->DesktopWidth = DesktopWidth;
 		settings->DesktopHeight = DesktopHeight;
@@ -149,7 +151,7 @@ BOOL freerds_peer_post_connect(freerdp_peer* client)
 
 	if (error_code != 0)
 	{
-		fprintf(stderr, "freerds_icp_LogonUser failed %d\n", error_code);
+		WLog_ERR(TAG, "freerds_icp_LogonUser failed %d", error_code);
 		return FALSE;
 	}
 
@@ -169,7 +171,7 @@ BOOL freerds_peer_activate(freerdp_peer* client)
 	rdpSettings* settings;
 	rdsConnection* connection = (rdsConnection*) client->context;
 
-	fprintf(stderr, "Client Activated\n");
+	WLog_INFO(TAG, "Client Activated");
 
 	settings = client->settings;
 
@@ -329,7 +331,7 @@ BOOL freerds_client_process_switch_session(rdsConnection* connection, wMessage* 
 
 	if (error != 0)
 	{
-		fprintf(stderr, "problem occured while switching session\n");
+		WLog_ERR(TAG, "problem occured while switching session");
 		return FALSE;
 	}
 
@@ -428,7 +430,7 @@ BOOL freerds_client_process_notification(rdsConnection* connection, wMessage* me
 			break;
 
 		default:
-			fprintf(stderr, "%s: unhandled message 0x%x\n", __FUNCTION__, message->id);
+			WLog_ERR(TAG, "%s: unhandled message 0x%x", __FUNCTION__, message->id);
 			break;
 	}
 
@@ -455,7 +457,7 @@ void* freerds_connection_main_thread(void* arg)
 	int ret;
 #endif
 
-	fprintf(stderr, "We've got a client %s\n", client->hostname);
+	WLog_INFO(TAG, "We've got a client %s", client->hostname);
 
 	bServerClose = FALSE;
 
@@ -496,7 +498,7 @@ void* freerds_connection_main_thread(void* arg)
 	sigaddset(&set, SIGPIPE);
 	ret = pthread_sigmask(SIG_BLOCK, &set, NULL);
 	if (0 != ret)
-		fprintf(stderr, "couldn't block SIGPIPE\n");
+		WLog_ERR(TAG, "couldn't block SIGPIPE");
 #endif
 
 	while (1)
@@ -522,13 +524,13 @@ void* freerds_connection_main_thread(void* arg)
 
 		if (WaitForSingleObject(GlobalTermEvent, 0) == WAIT_OBJECT_0)
 		{
-			fprintf(stderr, "GlobalTermEvent\n");
+			WLog_INFO(TAG, "GlobalTermEvent");
 			break;
 		}
 
 		if (WaitForSingleObject(LocalTermEvent, 0) == WAIT_OBJECT_0)
 		{
-			fprintf(stderr, "LocalTermEvent\n");
+			WLog_INFO(TAG, "LocalTermEvent");
 			break;
 		}
 
@@ -536,7 +538,7 @@ void* freerds_connection_main_thread(void* arg)
 		{
 			if (client->CheckFileDescriptor(client) != TRUE)
 			{
-				fprintf(stderr, "Failed to check freerdp file descriptor\n");
+				WLog_ERR(TAG, "Failed to check freerdp file descriptor");
 				break;
 			}
 		}
@@ -545,7 +547,7 @@ void* freerds_connection_main_thread(void* arg)
 		{
 			if (WTSVirtualChannelManagerCheckFileDescriptor(connection->vcm) != TRUE)
 			{
-				fprintf(stderr, "WTSVirtualChannelManagerCheckFileDescriptor failure\n");
+				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
 				break;
 			}
 		}
@@ -558,7 +560,7 @@ void* freerds_connection_main_thread(void* arg)
 			{
 				if (connector->CheckEventHandles((rdsBackend*) connector) < 0)
 				{
-					fprintf(stderr, "ModuleClient->CheckEventHandles failure\n");
+					WLog_ERR(TAG, "ModuleClient->CheckEventHandles failure");
 					bServerClose = TRUE;
 					break;
 				}
@@ -576,7 +578,7 @@ void* freerds_connection_main_thread(void* arg)
 		}
 	}
 
-	fprintf(stderr, "Client %s disconnected.\n", client->hostname);
+	WLog_INFO(TAG, "Client %s disconnected.", client->hostname);
 
 	if (connection->connector)
 	{

@@ -21,6 +21,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
@@ -29,6 +30,8 @@
 
 #include "core.h"
 
+#define TAG "freerds.server.core"
+
 /**
  * Custom helpers
  */
@@ -36,6 +39,8 @@
 int freerds_set_bounds_rect(rdsConnection* connection, rdsRect* rect)
 {
 	rdpUpdate* update = connection->client->update;
+
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	if (rect)
 	{
@@ -58,13 +63,15 @@ int freerds_set_bounds_rect(rdsConnection* connection, rdsRect* rect)
 
 int freerds_send_palette(rdsConnection* connection, int* palette)
 {
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
+
 	return 0;
 }
 
 int freerds_send_bell(rdsConnection* connection)
 {
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
+
 	return 0;
 }
 
@@ -92,6 +99,8 @@ int freerds_send_bitmap_update(rdsConnection* connection, int bpp, RDS_MSG_PAINT
 	UINT32 updateSizeEstimate;
 	BITMAP_DATA* bitmapData;
 	BITMAP_UPDATE bitmapUpdate;
+
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	nXSrc = msg->nLeftRect;
 	nYSrc = msg->nTopRect;
@@ -309,7 +318,7 @@ int freerds_set_pointer(rdsConnection* connection, RDS_MSG_SET_POINTER* msg)
 	POINTER_CACHED_UPDATE pointerCached;
 	rdpPointerUpdate* pointer = connection->client->update->pointer;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	pointerColor = &(pointerNew.colorPtrAttr);
 
@@ -347,6 +356,8 @@ int freerds_set_system_pointer(rdsConnection* connection, RDS_MSG_SET_SYSTEM_POI
 	POINTER_SYSTEM_UPDATE *pointer_system;
 	rdpPointerUpdate* pointer = connection->client->update->pointer;
 
+	WLog_VRB(TAG, "%s", __FUNCTION__);
+
 	pointer_system = &(pointer->pointer_system);
 	pointer_system->type = msg->ptrType;
 	IFCALL(pointer->PointerSystem, (rdpContext *)connection, pointer_system);
@@ -358,7 +369,7 @@ int freerds_orders_begin_paint(rdsConnection* connection)
 {
 	rdpUpdate* update = ((rdpContext*) connection)->update;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	update->BeginPaint((rdpContext*) connection);
 
@@ -369,7 +380,7 @@ int freerds_orders_end_paint(rdsConnection* connection)
 {
 	rdpUpdate* update = ((rdpContext*) connection)->update;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	update->EndPaint((rdpContext*) connection);
 
@@ -382,7 +393,7 @@ int freerds_orders_rect(rdsConnection* connection, int x, int y,
 	OPAQUE_RECT_ORDER opaqueRect;
 	rdpPrimaryUpdate* primary = connection->client->update->primary;
 
-	printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	opaqueRect.nLeftRect = x;
 	opaqueRect.nTopRect = y;
@@ -403,7 +414,7 @@ int freerds_orders_screen_blt(rdsConnection* connection, int x, int y,
 	SCRBLT_ORDER scrblt;
 	rdpPrimaryUpdate* primary = connection->client->update->primary;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	scrblt.nLeftRect = x;
 	scrblt.nTopRect = y;
@@ -427,7 +438,7 @@ int freerds_orders_pat_blt(rdsConnection* connection, int x, int y,
 	PATBLT_ORDER patblt;
 	rdpPrimaryUpdate* primary = connection->client->update->primary;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	patblt.nLeftRect = x;
 	patblt.nTopRect = y;
@@ -457,7 +468,7 @@ int freerds_orders_dest_blt(rdsConnection* connection,
 	DSTBLT_ORDER dstblt;
 	rdpPrimaryUpdate* primary = connection->client->update->primary;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	dstblt.nLeftRect = x;
 	dstblt.nTopRect = y;
@@ -477,7 +488,7 @@ int freerds_orders_line(rdsConnection* connection, RDS_MSG_LINE_TO* msg, rdsRect
 	LINE_TO_ORDER lineTo;
 	rdpPrimaryUpdate* primary = connection->client->update->primary;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	lineTo.backMode = 1;
 	lineTo.nXStart = msg->nXStart;
@@ -504,8 +515,8 @@ int freerds_orders_mem_blt(rdsConnection* connection, int cache_id,
 	MEMBLT_ORDER memblt;
 	rdpPrimaryUpdate* primary = connection->client->update->primary;
 
-	//printf("%s id: %d index: %d width: %d height: %d\n",
-	//		__FUNCTION__, cache_id, cache_idx, cx, cy);
+	WLog_VRB(TAG, "%s id: %d index: %d width: %d height: %d",
+			__FUNCTION__, cache_id, cache_idx, cx, cy);
 
 	memblt.nLeftRect = x;
 	memblt.nTopRect = y;
@@ -530,7 +541,7 @@ int freerds_orders_text(rdsConnection* connection, RDS_MSG_GLYPH_INDEX* msg, rds
 	GLYPH_INDEX_ORDER glyphIndex;
 	rdpPrimaryUpdate* primary = connection->client->update->primary;
 
-	//printf("%s: cacheId: %d\n", __FUNCTION__, msg->cacheId);
+	WLog_VRB(TAG, "%s: cacheId: %d", __FUNCTION__, msg->cacheId);
 
 	glyphIndex.backColor = msg->backColor;
 	glyphIndex.foreColor = msg->foreColor;
@@ -565,7 +576,7 @@ int freerds_orders_send_palette(rdsConnection* connection, int* palette, int cac
 	CACHE_COLOR_TABLE_ORDER cache_color_table;
 	rdpSecondaryUpdate* secondary = connection->client->update->secondary;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	cache_color_table.cacheIndex = cache_id;
 	cache_color_table.numberColors = 256;
@@ -580,8 +591,8 @@ int freerds_orders_send_font(rdsConnection* connection, RDS_MSG_CACHE_GLYPH* msg
 {
 	rdpSecondaryUpdate* secondary = connection->client->update->secondary;
 
-	//printf("%s: cacheId: %d cacheIndex: %d\n", __FUNCTION__,
-	//		msg->cacheId, msg->glyphData[0].cacheIndex);
+	WLog_VRB(TAG, "%s: cacheId: %d cacheIndex: %d", __FUNCTION__,
+			msg->cacheId, msg->glyphData[0].cacheIndex);
 
 	if (secondary->glyph_v2)
 	{
@@ -622,7 +633,7 @@ int freerds_orders_send_font(rdsConnection* connection, RDS_MSG_CACHE_GLYPH* msg
 
 int freerds_reset(rdsConnection* connection, RDS_MSG_RESET* msg)
 {
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	connection->settings->DesktopWidth = msg->DesktopWidth;
 	connection->settings->DesktopHeight = msg->DesktopHeight;
@@ -637,7 +648,7 @@ int freerds_orders_send_brush(rdsConnection* connection, int width, int height,
 	CACHE_BRUSH_ORDER cache_brush;
 	rdpSecondaryUpdate* secondary = connection->client->update->secondary;
 
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	cache_brush.index = cache_id;
 	cache_brush.bpp = bpp;
@@ -656,7 +667,8 @@ int freerds_orders_send_create_os_surface(rdsConnection* connection, CREATE_OFFS
 {
 	rdpAltSecUpdate* altsec = connection->client->update->altsec;
 
-	//printf("%s: id: %d width: %d height: %d\n", __FUNCTION__, id, width, height);
+	WLog_VRB(TAG, "%s: id: %d width: %d height: %d", __FUNCTION__,
+		createOffscreenBitmap->id, createOffscreenBitmap->cx, createOffscreenBitmap->cy);
 
 	IFCALL(altsec->CreateOffscreenBitmap, (rdpContext*) connection, createOffscreenBitmap);
 
@@ -668,7 +680,7 @@ int freerds_orders_send_switch_os_surface(rdsConnection* connection, int id)
 	SWITCH_SURFACE_ORDER switch_surface;
 	rdpAltSecUpdate* altsec = connection->client->update->altsec;
 
-	//printf("%s: id: %d\n", __FUNCTION__, id);
+	WLog_VRB(TAG, "%s: id: %d", __FUNCTION__, id);
 
 	switch_surface.bitmapId = id & 0xFFFF;
 
@@ -696,6 +708,8 @@ int freerds_send_surface_bits(rdsConnection* connection, int bpp, RDS_MSG_PAINT_
 	rdpSettings* settings;
 	rdsEncoder* encoder;
 	SURFACE_BITS_COMMAND cmd;
+
+	WLog_VRB(TAG, "%s", __FUNCTION__);
 
 	nXSrc = msg->nLeftRect;
 	nYSrc = msg->nTopRect;
@@ -803,7 +817,7 @@ int freerds_orders_send_frame_marker(rdsConnection* connection, UINT32 action, U
 	SURFACE_FRAME_MARKER surfaceFrameMarker;
 	rdpUpdate* update = connection->client->update;
 
-	//printf("%s: action: %d id: %d\n", __FUNCTION__, action, id);
+	WLog_VRB(TAG, "%s: action: %d id: %d", __FUNCTION__, action, id);
 
 	surfaceFrameMarker.frameAction = action;
 	surfaceFrameMarker.frameId = id;
@@ -815,12 +829,14 @@ int freerds_orders_send_frame_marker(rdsConnection* connection, UINT32 action, U
 
 int freerds_window_new_update(rdsConnection* connection, RDS_MSG_WINDOW_NEW_UPDATE* msg)
 {
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
+
 	return 0;
 }
 
 int freerds_window_delete(rdsConnection* connection, RDS_MSG_WINDOW_DELETE* msg)
 {
-	//printf("%s\n", __FUNCTION__);
+	WLog_VRB(TAG, "%s", __FUNCTION__);
+
 	return 0;
 }

@@ -26,12 +26,15 @@
 #include <winpr/path.h>
 #include <winpr/winsock.h>
 #include <winpr/platform.h>
+#include <winpr/wlog.h>
 
 #include "channels.h"
 
 //#define WITH_FREERDS_CHANNELS	1
 
 #include "rpc.h"
+
+#define TAG "freerds.server.channels"
 
 BOOL freerds_channels_is_channel_allowed(UINT32 SessionId, char* ChannelName)
 {
@@ -55,10 +58,10 @@ int freerds_channels_post_connect(rdsConnection* session)
 	if (WTSVirtualChannelManagerIsChannelJoined(session->vcm, "cliprdr"))
 	{
 		allowed = freerds_channels_is_channel_allowed(session->id, "cliprdr");
-		printf("channel %s is %s\n", "cliprdr", allowed ? "allowed" : "not allowed");
+		WLog_INFO(TAG, "channel %s is %s", "cliprdr", allowed ? "allowed" : "not allowed");
 
 #ifdef WITH_FREERDS_CHANNELS
-		printf("Channel %s registered\n", "cliprdr");
+		WLog_INFO(TAG, "Channel %s registered", "cliprdr");
 		session->cliprdr = cliprdr_server_context_new(session->vcm);
 		session->cliprdr->Start(session->cliprdr);
 #endif
@@ -67,10 +70,10 @@ int freerds_channels_post_connect(rdsConnection* session)
 	if (WTSVirtualChannelManagerIsChannelJoined(session->vcm, "rdpdr"))
 	{
 		allowed = freerds_channels_is_channel_allowed(session->id, "rdpdr");
-		printf("channel %s is %s\n", "rdpdr", allowed ? "allowed" : "not allowed");
+		WLog_INFO(TAG, "channel %s is %s", "rdpdr", allowed ? "allowed" : "not allowed");
 
 #ifdef WITH_FREERDS_CHANNELS
-		printf("Channel %s registered\n", "rdpdr");
+		WLog_INFO(TAG, "Channel %s registered", "rdpdr");
 		session->rdpdr = rdpdr_server_context_new(session->vcm);
 		session->rdpdr->Start(session->rdpdr);
 #endif
@@ -79,10 +82,10 @@ int freerds_channels_post_connect(rdsConnection* session)
 	if (WTSVirtualChannelManagerIsChannelJoined(session->vcm, "rdpsnd"))
 	{
 		allowed = freerds_channels_is_channel_allowed(session->id, "rdpsnd");
-		printf("channel %s is %s\n", "rdpsnd", allowed ? "allowed" : "not allowed");
+		WLog_INFO(TAG, "channel %s is %s", "rdpsnd", allowed ? "allowed" : "not allowed");
 
 #ifdef WITH_FREERDS_CHANNELS
-		printf("Channel %s registered\n", "rdpsnd");
+		WLog_INFO(TAG, "Channel %s registered", "rdpsnd");
 		session->rdpsnd = rdpsnd_server_context_new(session->vcm);
 		session->rdpsnd->Start(session->rdpsnd);
 #endif
@@ -168,7 +171,7 @@ int freerds_channel_server_open(rdsChannelServer* channels)
 
 	if (status == SOCKET_ERROR)
 	{
-		fprintf(stderr, "listen failure: %d\n", WSAGetLastError());
+		WLog_ERR(TAG, "listen failure: %d", WSAGetLastError());
 		closesocket(channels->listenerSocket);
 		channels->listenerSocket = 0;
 		return -1;
@@ -176,7 +179,7 @@ int freerds_channel_server_open(rdsChannelServer* channels)
 
 	channels->listenEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) channels->listenerSocket);
 
-	fprintf(stderr, "Listening on %s:%d for channels...\n", channels->listenAddress, channels->listenPort);
+	WLog_INFO(TAG, "Listening on %s:%d for channels...", channels->listenAddress, channels->listenPort);
 
 	return 1;
 }
@@ -216,7 +219,7 @@ int freerds_channel_server_accept(rdsChannelServer* channels)
 
 	if (socket == INVALID_SOCKET)
 	{
-		fprintf(stderr, "accept failed with error: %d\n", WSAGetLastError());
+		WLog_ERR(TAG, "accept failed with error: %d", WSAGetLastError());
 		return -1;
 	}
 
@@ -370,7 +373,7 @@ int freerds_channel_check_socket(rdsConnection* connection, rdsChannel* channel)
 
 	if (status != sizeof(length))
 	{
-		fprintf(stderr, "socket recv failed with status %d (lasterror=%d)\n", status, WSAGetLastError());
+		WLog_ERR(TAG, "socket recv failed with status %d (lasterror=%d)", status, WSAGetLastError());
 		return -1;
 	}
 
@@ -378,7 +381,7 @@ int freerds_channel_check_socket(rdsConnection* connection, rdsChannel* channel)
 
 	if (!buffer)
 	{
-		fprintf(stderr, "memory allocation error\n");
+		WLog_ERR(TAG, "memory allocation error");
 		return -1;
 	}
 
@@ -386,7 +389,7 @@ int freerds_channel_check_socket(rdsConnection* connection, rdsChannel* channel)
 
 	if (status != length)
 	{
-		fprintf(stderr, "recv failed with status %d (lasterror=%d)\n", status, WSAGetLastError());
+		WLog_ERR(TAG, "recv failed with status %d (lasterror=%d)", status, WSAGetLastError());
 		free(buffer);
 		return -1;
 	}

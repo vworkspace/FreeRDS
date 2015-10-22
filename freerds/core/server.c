@@ -30,6 +30,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
+#include <winpr/wlog.h>
 
 #include <winpr/tools/makecert.h>
 
@@ -41,6 +42,8 @@
 #endif
 
 #include "rpc.h"
+
+#define TAG "freerds.server"
 
 rdsServer* g_Server = NULL;
 
@@ -212,7 +215,7 @@ int freerds_server_main_loop(rdsServer* server)
 
 		if (listener->GetEventHandles(listener, events, &nCount) < 0)
 		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -225,7 +228,7 @@ int freerds_server_main_loop(rdsServer* server)
 
 		if (!listener->CheckFileDescriptor(listener))
 		{
-			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 

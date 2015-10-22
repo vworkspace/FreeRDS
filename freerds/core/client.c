@@ -21,6 +21,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 
 #include <errno.h>
 
@@ -36,6 +37,8 @@
 #include "freerds.h"
 
 #include <freerds/backend.h>
+
+#define TAG "freerds.server.client"
 
 void* freerds_client_thread(void* arg)
 {
@@ -267,7 +270,7 @@ int freerds_client_inbound_glyph_index(rdsBackend* backend, RDS_MSG_GLYPH_INDEX*
 static void freerds_client_detach_framebuffer(RDS_FRAMEBUFFER* framebuffer)
 {
 #ifndef _WIN32
-	fprintf(stderr, "detaching segment %d from %p\n",
+	WLog_INFO(TAG, "detaching segment %d from %p",
 			framebuffer->fbSegmentId, framebuffer->fbSharedMemory);
 
 	shmdt(framebuffer->fbSharedMemory);
@@ -313,7 +316,7 @@ int freerds_client_inbound_shared_framebuffer(rdsBackend* backend, RDS_MSG_SHARE
 
 		if (addr == ((void*) (size_t) (-1)))
 		{
-			fprintf(stderr, "failed to attach to segment %d, errno: %d\n",
+			WLog_ERR(TAG, "failed to attach to segment %d, errno: %d",
 					backend->framebuffer.fbSegmentId, errno);
 			return 1;
 		}
@@ -324,12 +327,12 @@ int freerds_client_inbound_shared_framebuffer(rdsBackend* backend, RDS_MSG_SHARE
 		backend->framebuffer.fbSharedMemory = (BYTE*) addr;
 		backend->framebuffer.fbAttached = 1;
 
-		fprintf(stderr, "attached segment %d to %p\n",
+		WLog_INFO(TAG, "attached segment %d to %p",
 				backend->framebuffer.fbSegmentId, backend->framebuffer.fbSharedMemory);
 
 		if ((DesktopWidth != settings->DesktopWidth) || (DesktopHeight != settings->DesktopHeight))
 		{
-			fprintf(stderr, "Resizing client to %dx%d\n", DesktopWidth, DesktopHeight);
+			WLog_INFO(TAG, "Resizing client to %dx%d", DesktopWidth, DesktopHeight);
 
 			settings->DesktopWidth = DesktopWidth;
 			settings->DesktopHeight = DesktopHeight;

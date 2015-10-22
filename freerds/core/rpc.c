@@ -22,10 +22,13 @@
 #include <winpr/pipe.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
+#include <winpr/wlog.h>
 
 #include "core.h"
 
 #include "rpc.h"
+
+#define TAG "freerds.server.rpc"
 
 extern rdsServer* g_Server;
 
@@ -227,7 +230,7 @@ static int pbrpc_process_response(rdsServer* server, FDSAPI_MSG_PACKET* msg)
 
 	if (!ta)
 	{
-		fprintf(stderr,"unsoliciated response - ignoring (tag %d)\n", msg->callId);
+		WLog_ERR(TAG, "unsoliciated response - ignoring (tag %d)", msg->callId);
 		return 1;
 	}
 
@@ -330,7 +333,7 @@ static int pbrpc_process_request(rdsServer* server, FDSAPI_MSG_PACKET* msg)
 
 	if (!cb)
 	{
-		fprintf(stderr, "server callback not found %d\n", msg->msgType);
+		WLog_ERR(TAG, "server callback not found %d", msg->msgType);
 		msg->status = FDSAPI_STATUS_NOTFOUND;
 		status = pbrpc_send_response(server, NULL, msg->status, msg->msgType, msg->callId);
 		return status;
@@ -454,7 +457,7 @@ static void pbrpc_main_loop(pbRPCContext* context)
 
 			if (status < 0)
 			{
-				fprintf(stderr, "Transport problem reconnecting..\n");
+				WLog_ERR(TAG, "Transport problem reconnecting..");
 				pbrpc_reconnect(context);
 				continue;
 			}
@@ -472,7 +475,7 @@ static void pbrpc_main_loop(pbRPCContext* context)
 
 			if (status < 0)
 			{
-				fprintf(stderr, "Transport problem reconnecting..\n");
+				WLog_ERR(TAG, "Transport problem reconnecting..");
 				pbrpc_reconnect(context);
 				continue;
 			}

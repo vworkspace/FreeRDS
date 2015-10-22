@@ -21,9 +21,13 @@
 #include "config.h"
 #endif
 
+#include <winpr/wlog.h>
+
 #include "freerds.h"
 
 #include <freerdp/codec/region.h>
+
+#define TAG "freerds.server.pipeline"
 
 int freerds_server_message_enqueue(rdsBackend* backend, RDS_MSG_COMMON* msg)
 {
@@ -293,7 +297,7 @@ int freerds_message_server_queue_process_message(rdsBackendConnector* connector,
 
 	if (status < 0)
 	{
-		printf("freerds_message_server_queue_process_message (%d) status: %d\n", message->id, status);
+		WLog_ERR(TAG, "%s: (%d) status: %d", __FUNCTION__, message->id, status);
 		return -1;
 	}
 

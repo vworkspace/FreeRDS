@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/wlog.h>
+
 #include "freerds.h"
 #include <freerds/backend.h>
 
@@ -29,6 +31,8 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #endif
+
+#define TAG "freerds.server.backend"
 
 rdsBackendConnector* freerds_connector_new(rdsConnection* connection)
 {
@@ -99,15 +103,15 @@ BOOL freerds_connector_connect(rdsBackendConnector* connector)
 
 	if (hClientPipe == INVALID_HANDLE_VALUE)
 	{
-		fprintf(stderr, "Failed to create named pipe %s\n", connector->Endpoint);
+		WLog_ERR(TAG, "Failed to create named pipe %s", connector->Endpoint);
 		return FALSE;
 	}
 
-	printf("Connected to endpoint %s\n", connector->Endpoint);
+	WLog_INFO(TAG, "Connected to endpoint %s", connector->Endpoint);
 
 	if (freerds_init_client(hClientPipe, connector->connection->settings, connector->OutboundStream) < 0)
 	{
-		fprintf(stderr, "Error sending initial packet with %s\n", connector->Endpoint);
+		WLog_ERR(TAG, "Error sending initial packet with %s", connector->Endpoint);
 		return FALSE;
 	}
 
