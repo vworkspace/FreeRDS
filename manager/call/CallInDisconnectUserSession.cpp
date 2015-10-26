@@ -28,6 +28,8 @@
 
 namespace freerds
 {
+	static wLog* logger_CallInDisconnectUserSession = WLog_Get("freerds.CallInDisconnectUserSession");
+
 	CallInDisconnectUserSession::CallInDisconnectUserSession()
 	: m_RequestId(FDSAPI_DISCONNECT_USER_REQUEST_ID), m_ResponseId(FDSAPI_DISCONNECT_USER_RESPONSE_ID)
 	{
@@ -59,12 +61,18 @@ namespace freerds
 
 		freerds_rpc_msg_free(m_RequestId, &m_Request);
 
+		WLog_Print(logger_CallInDisconnectUserSession, WLOG_DEBUG,
+			"request: connectionId=%lu", mConnectionId);
+
 		return 0;
 	};
 
 	int CallInDisconnectUserSession::encodeResponse()
 	{
 		wStream* s;
+
+		WLog_Print(logger_CallInDisconnectUserSession, WLOG_DEBUG,
+			"response: connectionId=%lu", mConnectionId);
 
 		m_Response.ConnectionId = mConnectionId;
 
@@ -81,18 +89,28 @@ namespace freerds
 	{
 		ConnectionPtr currentConnection = APP_CONTEXT.getConnectionStore()->getConnection(mConnectionId);
 
-		if ((currentConnection == NULL) || (currentConnection->getSessionId() == 0)) {
+		if (!currentConnection)
+		{
+			WLog_Print(logger_CallInDisconnectUserSession, WLOG_ERROR,
+				"connection does not exist for connectionId=%lu", mConnectionId);
 			mDisconnected = false;
 			return -1;
 		}
 
-		SessionPtr currentSession = APP_CONTEXT.getSessionStore()->getSession(currentConnection->getSessionId());
+		UINT32 sessionId = currentConnection->getSessionId();
+		SessionPtr currentSession = APP_CONTEXT.getSessionStore()->getSession(sessionId);
 
 		if (!currentSession)
 		{
+			WLog_Print(logger_CallInDisconnectUserSession, WLOG_ERROR,
+				"session does not exist for sessionId=%lu", sessionId);
 			mDisconnected = false;
 			return -1;
 		}
+
+		WLog_Print(logger_CallInDisconnectUserSession, WLOG_DEBUG,
+			"disconnecting session (connectionId=%lu, sessionId=%lu)",
+			mConnectionId, sessionId);
 
 		currentSession->setConnectState(WTSDisconnected);
 		APP_CONTEXT.getConnectionStore()->removeConnection(mConnectionId);
@@ -103,13 +121,18 @@ namespace freerds
 			timeout = 0;
 		}
 
-		if (timeout == 0)  {
+		if (timeout == 0)
+		{
+			WLog_Print(logger_CallInDisconnectUserSession, WLOG_DEBUG,
+				"terminating session (sessionId=%lu)", sessionId);
+
 			TaskEndSessionPtr task = TaskEndSessionPtr(new TaskEndSession());
 			task->setSessionId(currentSession->getSessionId());
 			APP_CONTEXT.addTask(task);
 		}
 
 		mDisconnected = true;
+
 		return 0;
 	}
 }

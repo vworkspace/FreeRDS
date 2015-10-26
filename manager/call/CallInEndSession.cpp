@@ -28,6 +28,8 @@
 
 namespace freerds
 {
+	static wLog* logger_CallInEndSession = WLog_Get("freerds.CallInEndSession");
+
 	CallInEndSession::CallInEndSession()
 	: m_RequestId(FDSAPI_END_SESSION_REQUEST_ID), m_ResponseId(FDSAPI_END_SESSION_RESPONSE_ID)
 	{
@@ -59,6 +61,9 @@ namespace freerds
 
 		freerds_rpc_msg_free(m_RequestId, &m_Request);
 
+		WLog_Print(logger_CallInEndSession, WLOG_DEBUG,
+			"request: sessionId=%lu", mSessionId);
+
 		return 0;
 	};
 
@@ -66,8 +71,12 @@ namespace freerds
 	{
 		wStream* s;
 
+		WLog_Print(logger_CallInEndSession, WLOG_DEBUG,
+			"response: sessionId=-%lu, status=%d",
+			mSessionId, 0);
+
 		m_Response.status = 0;
-		m_Response.SessionId = m_Request.SessionId;
+		m_Response.SessionId = mSessionId;
 
 		s = freerds_rpc_msg_pack(m_ResponseId, &m_Response, NULL);
 
@@ -80,10 +89,15 @@ namespace freerds
 
 	int CallInEndSession::doStuff()
 	{
+		WLog_Print(logger_CallInEndSession, WLOG_DEBUG,
+			"terminating session (sessionId=%lu)", mSessionId);
+
 		TaskEndSessionPtr task = TaskEndSessionPtr(new TaskEndSession());
 		task->setSessionId(mSessionId);
 		APP_CONTEXT.addTask(task);
+
 		mSuccess = true;
+
 		return 0;
 	}
 }

@@ -27,6 +27,8 @@
 
 namespace freerds
 {
+	static wLog* logger_CallInLogOffUserSession = WLog_Get("freerds.CallInLogOffUserSession");
+
 	CallInLogOffUserSession::CallInLogOffUserSession()
 	: m_RequestId(FDSAPI_LOGOFF_USER_REQUEST_ID), m_ResponseId(FDSAPI_LOGOFF_USER_RESPONSE_ID)
 	{
@@ -58,12 +60,18 @@ namespace freerds
 
 		freerds_rpc_msg_free(m_RequestId, &m_Request);
 
+		WLog_Print(logger_CallInLogOffUserSession, WLOG_DEBUG,
+			"request: connectionId=%lu", mConnectionId);
+
 		return 0;
 	};
 
 	int CallInLogOffUserSession::encodeResponse()
 	{
 		wStream* s;
+
+		WLog_Print(logger_CallInLogOffUserSession, WLOG_DEBUG,
+			"response: connectionId=%lu", mConnectionId);
 
 		m_Response.ConnectionId = mConnectionId;
 
@@ -80,22 +88,35 @@ namespace freerds
 	{
 		ConnectionPtr currentConnection = APP_CONTEXT.getConnectionStore()->getConnection(mConnectionId);
 
-		if ((currentConnection == NULL) || (currentConnection->getSessionId() == 0)) {
+		if (!currentConnection)
+		{
+			WLog_Print(logger_CallInLogOffUserSession, WLOG_ERROR,
+				"connection does not exist for connectionId=%lu", mConnectionId);
 			mLoggedOff = false;
 			return -1;
 		}
-		SessionPtr currentSession = APP_CONTEXT.getSessionStore()->getSession(currentConnection->getSessionId());
 
-		if (!currentSession) {
+		UINT32 sessionId = currentConnection->getSessionId();
+		SessionPtr currentSession = APP_CONTEXT.getSessionStore()->getSession(sessionId);
+
+		if (!currentSession)
+		{
+			WLog_Print(logger_CallInLogOffUserSession, WLOG_ERROR,
+				"session does not exist for sessionId=%lu", sessionId);
 			mLoggedOff = false;
 			return -1;
 		}
+
+		WLog_Print(logger_CallInLogOffUserSession, WLOG_DEBUG,
+			"logging off session (connectionId=%lu, sessionId=%lu)",
+			mConnectionId, sessionId);
 
 		currentSession->stopModule();
 
-		APP_CONTEXT.getSessionStore()->removeSession(currentConnection->getSessionId());
+		APP_CONTEXT.getSessionStore()->removeSession(sessionId);
 		APP_CONTEXT.getConnectionStore()->removeConnection(mConnectionId);
 		mLoggedOff = true;
+
 		return 0;
 	}
 }

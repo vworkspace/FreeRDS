@@ -23,8 +23,12 @@
 
 #include "CallInIsVCAllowed.h"
 
+#include <session/ApplicationContext.h>
+
 namespace freerds
 {
+	static wLog* logger_CallInIsVCAllowed = WLog_Get("freerds.CallInIsVCAllowed");
+
 	CallInIsVCAllowed::CallInIsVCAllowed()
 	: mVirtualChannelAllowed(false),
 	  m_RequestId(FDSAPI_CHANNEL_ALLOWED_REQUEST_ID), m_ResponseId(FDSAPI_CHANNEL_ALLOWED_RESPONSE_ID)
@@ -56,12 +60,20 @@ namespace freerds
 
 		freerds_rpc_msg_free(m_RequestId, &m_Request);
 
+		WLog_Print(logger_CallInIsVCAllowed, WLOG_DEBUG,
+			"request: virtualChannelName=%s",
+			mVirtualChannelName.c_str());
+
 		return 0;
 	};
 
 	int CallInIsVCAllowed::encodeResponse()
 	{
 		wStream* s;
+
+		WLog_Print(logger_CallInIsVCAllowed, WLOG_DEBUG,
+			"response: virtualChannelAllowed=%s",
+			mVirtualChannelAllowed ? "true" : "false");
 
 		m_Response.ChannelAllowed = mVirtualChannelAllowed ? TRUE : FALSE;
 
@@ -77,6 +89,7 @@ namespace freerds
 	int CallInIsVCAllowed::doStuff()
 	{
 		mVirtualChannelAllowed = true;
+
 		return 0;
 	}
 }

@@ -28,7 +28,7 @@
 
 namespace freerds
 {
-	static wLog* logger_CallInLogonUser = WLog_Get("freerds.CallInAuthenticateUser");
+	static wLog* logger_CallInAuthenticateUser = WLog_Get("freerds.CallInAuthenticateUser");
 
 	CallInAuthenticateUser::CallInAuthenticateUser()
 	: mSessionId(0), mAuthStatus(0),
@@ -64,12 +64,20 @@ namespace freerds
 
 		freerds_rpc_msg_free(m_RequestId, &m_Request);
 
+		WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG,
+			"request: sessionId=%lu, userName=%s, domainName=%s",
+			mSessionId, mUserName.c_str(), mDomainName.c_str());
+
 		return 0;
 	};
 
 	int CallInAuthenticateUser::encodeResponse()
 	{
 		wStream* s;
+
+		WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG,
+			"response: status=%d",
+			mAuthStatus);
 
 		m_Response.ServiceEndpoint = NULL;
 		m_Response.status = (mAuthStatus == 0) ? 0 : 1;
@@ -89,12 +97,17 @@ namespace freerds
 		ConnectionPtr currentConnection = APP_CONTEXT.getConnectionStore()->getConnection(connectionId);
 
 		if (currentConnection == NULL) {
-			WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "Cannot get Connection for sessionId %lu for resolved connectionId %lu",mSessionId,connectionId);
+			WLog_Print(logger_CallInAuthenticateUser, WLOG_ERROR,
+				"Cannot get Connection for sessionId %lu for resolved connectionId %lu",
+				mSessionId, connectionId);
 			mAuthStatus = -1;
 			return -1;
 		}
 
+		WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG, "authenticating user");
 		mAuthStatus = currentConnection->authenticateUser(mUserName, mDomainName, mPassword);
+		WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG, "authentication %s", mAuthStatus == 0 ? "succeeded" : "failed");
+
 		return mAuthStatus;
 	}
 
@@ -107,27 +120,43 @@ namespace freerds
 			reconnectAllowed = true;
 		}
 
-		if (reconnectAllowed) {
+		if (reconnectAllowed)
+		{
 			currentSession = APP_CONTEXT.getSessionStore()->getFirstDisconnectedSessionUserName(mUserName, mDomainName);
+			if (currentSession)
+			{
+				WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG,
+					"found disconnected session - sessionId=%lu, state=%lu",
+					currentSession->getSessionId(), currentSession->getConnectState());
+			}
 		}
 
 		if ((!currentSession) || (currentSession->getConnectState() != WTSDisconnected))
 		{
 			// create new Session for this request
 			currentSession = APP_CONTEXT.getSessionStore()->createSession();
+
+			WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG,
+				"creating new session - sessionId=%lu",
+				currentSession->getSessionId());
+
 			currentSession->setUserName(mUserName);
 			currentSession->setDomain(mDomainName);
 
 			if (!currentSession->generateUserToken())
 			{
-				WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "generateUserToken failed for user %s with domain %s",mUserName.c_str(),mDomainName.c_str());
+				WLog_Print(logger_CallInAuthenticateUser, WLOG_ERROR,
+					"generateUserToken failed for user %s with domain %s",
+					mUserName.c_str(), mDomainName.c_str());
 				mResult = 1;// will report error with answer
 				return 1;
 			}
 
 			if (!currentSession->generateEnvBlockAndModify())
 			{
-				WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "generateEnvBlockAndModify failed for user %s with domain %s",mUserName.c_str(),mDomainName.c_str());
+				WLog_Print(logger_CallInAuthenticateUser, WLOG_ERROR,
+					"generateEnvBlockAndModify failed for user %s with domain %s",
+					mUserName.c_str(), mDomainName.c_str());
 				mResult = 1;// will report error with answer
 				return 1;
 			}
@@ -140,6 +169,10 @@ namespace freerds
 		}
 		else
 		{
+			WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG,
+				"connecting to disconnected session - sessionId=%lu",
+				currentSession->getSessionId());
+
 			currentSession->setConnectState(WTSConnectQuery);
 		}
 
@@ -151,11 +184,17 @@ namespace freerds
 			std::string pipeName;
 			if (!currentSession->startModule(pipeName))
 			{
-				WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "ModuleConfig %s does not start properly for user %s in domain %s",currentSession->getModuleConfigName().c_str(),mUserName.c_str(),mDomainName.c_str());
+				WLog_Print(logger_CallInAuthenticateUser, WLOG_ERROR,
+					"ModuleConfig %s does not start properly for user %s in domain %s",
+					currentSession->getModuleConfigName().c_str(), mUserName.c_str(), mDomainName.c_str());
 				mResult = 1;// will report error with answer
 				return 1;
 			}
 		}
+
+		WLog_Print(logger_CallInAuthenticateUser, WLOG_DEBUG,
+			"switching from session %lu to session %lu",
+			mSessionId, currentSession->getSessionId());
 
 		TaskSwitchToPtr switchToTask = TaskSwitchToPtr(new TaskSwitchTo());
 		switchToTask->setConnectionId(connectionId);

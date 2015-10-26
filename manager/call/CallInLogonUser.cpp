@@ -74,12 +74,23 @@ namespace freerds
 
 		freerds_rpc_msg_free(m_RequestId, &m_Request);
 
+		WLog_Print(logger_CallInLogonUser, WLOG_DEBUG,
+			"request: connectionId=%lu, userName=%s, domainName=%s, width=%ld, height=%ld, colorDepth=%ld, "
+			"clientName=%s, clientAddress=%s, clientBuildNumber=%ld, clientProductId=%ld, clientHardwareId=%ld, "
+			"clientProtocolType=%ld",
+			mConnectionId, mUserName.c_str(), mDomainName.c_str(), mWidth, mHeight, mColorDepth,
+			mClientName.c_str(), mClientAddress.c_str(), mClientBuildNumber, mClientProductId, mClientHardwareId,
+			mClientProtocolType);
+
 		return 0;
 	};
 
 	int CallInLogonUser::encodeResponse()
 	{
 		wStream* s;
+
+		WLog_Print(logger_CallInLogonUser, WLOG_DEBUG,
+			"response: serviceEndPoint=%s", mPipeName.c_str());
 
 		m_Response.ServiceEndpoint = (char*) mPipeName.c_str();
 
@@ -96,14 +107,20 @@ namespace freerds
 	{
 		ConnectionPtr currentConnection = APP_CONTEXT.getConnectionStore()->getOrCreateConnection(mConnectionId);
 
-		if (currentConnection == NULL)
+		if (!currentConnection)
 		{
-			WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "Cannot get Connection for connectionId %lu",mConnectionId);
+			WLog_Print(logger_CallInLogonUser, WLOG_ERROR,
+				"connection does not exist for connectionId=%lu",
+				mConnectionId);
 			mAuthStatus = -1;
 			return -1;
 		}
 
-		return currentConnection->authenticateUser(mUserName, mDomainName, mPassword);
+		WLog_Print(logger_CallInLogonUser, WLOG_DEBUG, "authenticating user");
+		int authStatus = currentConnection->authenticateUser(mUserName, mDomainName, mPassword);
+		WLog_Print(logger_CallInLogonUser, WLOG_DEBUG, "authentication %s", authStatus == 0 ? "succeeded" : "failed");
+
+		return authStatus;
 	}
 
 	int CallInLogonUser::getUserSession()
@@ -116,13 +133,24 @@ namespace freerds
 			reconnectAllowed = true;
 		}
 
-		if (reconnectAllowed) {
+		if (reconnectAllowed)
+		{
 			currentSession = APP_CONTEXT.getSessionStore()->getFirstDisconnectedSessionUserName(mUserName, mDomainName);
+			if (currentSession)
+			{
+				WLog_Print(logger_CallInLogonUser, WLOG_DEBUG,
+					"found disconnected session - sessionId=%lu, state=%lu",
+					currentSession->getSessionId(), currentSession->getConnectState());
+			}
 		}
 
 		if (currentSession && (currentSession->getConnectState() == WTSDisconnected))
 		{
 			// reconnect to a disconnected session
+			WLog_Print(logger_CallInLogonUser, WLOG_DEBUG,
+				"connecting to disconnected session - sessionId=%lu",
+				currentSession->getSessionId());
+
 			currentSession->setClientDisplayWidth(mWidth);
 			currentSession->setClientDisplayHeight(mHeight);
 			currentSession->setClientDisplayColorDepth(mColorDepth);
@@ -137,6 +165,11 @@ namespace freerds
 		{
 			// create new Session for this request
 			currentSession = APP_CONTEXT.getSessionStore()->createSession();
+
+			WLog_Print(logger_CallInLogonUser, WLOG_DEBUG,
+				"creating new session - sessionId=%lu",	
+				currentSession->getSessionId());
+
 			currentSession->setUserName(mUserName);
 			currentSession->setDomain(mDomainName);
 			currentSession->setClientDisplayWidth(mWidth);
@@ -155,14 +188,18 @@ namespace freerds
 
 			if (!currentSession->generateUserToken())
 			{
-				WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "generateUserToken failed for user %s with domain %s",mUserName.c_str(),mDomainName.c_str());
+				WLog_Print(logger_CallInLogonUser, WLOG_ERROR,
+					"generateUserToken failed for user %s with domain %s",
+					mUserName.c_str(), mDomainName.c_str());
 				mResult = 1;// will report error with answer
 				return 1;
 			}
 
 			if (!currentSession->generateEnvBlockAndModify())
 			{
-				WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "generateEnvBlockAndModify failed for user %s with domain %s",mUserName.c_str(),mDomainName.c_str());
+				WLog_Print(logger_CallInLogonUser, WLOG_ERROR,
+					"generateEnvBlockAndModify failed for user %s with domain %s",
+					mUserName.c_str(), mDomainName.c_str());
 				mResult = 1;// will report error with answer
 				return 1;
 			}
@@ -185,7 +222,10 @@ namespace freerds
 			std::string pipeName;
 			if (!currentSession->startModule(pipeName))
 			{
-				WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "ModuleConfig %s does not start properly for user %s in domain %s",currentSession->getModuleConfigName().c_str(),mUserName.c_str(),mDomainName.c_str());
+				WLog_Print(logger_CallInLogonUser, WLOG_ERROR,
+					"ModuleConfig %s does not start properly for user %s in domain %s",
+					currentSession->getModuleConfigName().c_str(),
+					mUserName.c_str(), mDomainName.c_str());
 				mResult = 1;// will report error with answer
 				return 1;
 			}
@@ -194,6 +234,7 @@ namespace freerds
 		currentSession->setConnectState(WTSActive);
 
 		mPipeName = currentSession->getPipeName();
+
 		return 0;
 	}
 
@@ -228,7 +269,9 @@ namespace freerds
 
 		if (!currentSession->generateAuthEnvBlockAndModify())
 		{
-			WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "generateEnvBlockAndModify failed for user %s with domain %s",mUserName.c_str(),mDomainName.c_str());
+			WLog_Print(logger_CallInLogonUser, WLOG_ERROR,
+				"generateEnvBlockAndModify failed for user %s with domain %s",
+				mUserName.c_str(), mDomainName.c_str());
 			mResult = 1;// will report error with answer
 			return 1;
 		}

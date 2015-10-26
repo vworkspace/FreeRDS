@@ -24,8 +24,12 @@
 
 #include "CallInPing.h"
 
+#include <session/ApplicationContext.h>
+
 namespace freerds
 {
+	static wLog* logger_CallInPing = WLog_Get("freerds.CallInPing");
+
 	CallInPing::CallInPing()
 	: m_RequestId(FDSAPI_HEARTBEAT_REQUEST_ID), m_ResponseId(FDSAPI_HEARTBEAT_RESPONSE_ID)
 	{
@@ -54,12 +58,20 @@ namespace freerds
 
 		freerds_rpc_msg_free(m_RequestId, &m_Request);
 
+		WLog_Print(logger_CallInPing, WLOG_DEBUG,
+			"request: heartbeatId=%lu",
+			m_Request.HeartbeatId);
+
 		return 0;
 	};
 
 	int CallInPing::encodeResponse()
 	{
 		wStream* s;
+
+		WLog_Print(logger_CallInPing, WLOG_DEBUG,
+			"response: heartbeatId=%lu",
+			m_Request.HeartbeatId);
 
 		m_Response.HeartbeatId = m_Request.HeartbeatId;
 
