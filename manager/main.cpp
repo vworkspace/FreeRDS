@@ -92,11 +92,6 @@ int freerds_daemonize_process(const char* pid_file)
 	int pid;
 	FILE* fd;
 	char text[32];
-	char logFilePath[512];
-	char* logFileName;
-	char* delimiter;
-	wLog* wLog;
-	wLogFileAppender* wLogAppender;
 
 	if (!PathFileExistsA(FREERDS_VAR_PATH))
 		CreateDirectoryA(FREERDS_VAR_PATH, NULL);
@@ -156,26 +151,6 @@ int freerds_daemonize_process(const char* pid_file)
 	open("/dev/null", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	open("/dev/null", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 
-	/* Set up logging. */
-	GetModuleFileName(NULL, logFilePath, sizeof(logFilePath));
-	strcat(logFilePath, ".log");
-
-	delimiter = strrchr(logFilePath, '/');
-	logFileName = delimiter + 1;
-	*delimiter = '\0';
-
-	SetEnvironmentVariable("WLOG_APPENDER", "FILE");
-	SetEnvironmentVariable("WLOG_FILEAPPENDER_OUTPUT_FILE_PATH", logFilePath);
-	SetEnvironmentVariable("WLOG_FILEAPPENDER_OUTPUT_FILE_NAME", logFileName);
-
-	wLog = WLog_GetRoot();
-	WLog_SetLogAppenderType(wLog, WLOG_APPENDER_FILE);
-	wLogAppender = (wLogFileAppender*) WLog_GetLogAppender(wLog);
-	WLog_FileAppender_SetOutputFilePath(wLog, wLogAppender, logFilePath);
-	WLog_FileAppender_SetOutputFileName(wLog, wLogAppender, logFileName);
-
-	WLog_DBG("main", "started");
-
 	/* end of daemonizing code */
 
 	return 1;
@@ -195,6 +170,9 @@ int main(int argc, char** argv)
 	BOOL daemon;
 	BOOL kill_process;
 	char pid_file[256];
+	wLog* wLogRoot;
+	wLogAppender* wLogAppender;
+	wLogLayout* wLogLayout;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	daemon = TRUE;
@@ -245,8 +223,20 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	/* Initialize logging. */
+	WLog_Init();
+
+	wLogRoot = WLog_GetRoot();
+
+	wLogLayout = WLog_GetLogLayout(wLogRoot);
+	WLog_Layout_SetPrefixFormat(wLogRoot, wLogLayout, "[%lv:%mn] [%fl|%fn|%ln] - ");
+
 	if (daemon)
 	{
+		char logFilePath[512];
+		char* logFileName;
+		char* delimiter;
+
 		status = freerds_daemonize_process(pid_file);
 
 		if (!status)
@@ -254,7 +244,37 @@ int main(int argc, char** argv)
 
 		if (status < 0)
 			return 1;
+
+		/* Set up logging to a file. */
+		GetModuleFileName(NULL, logFilePath, sizeof(logFilePath));
+		strcat(logFilePath, ".log");
+
+		delimiter = strrchr(logFilePath, '/');
+		logFileName = delimiter + 1;
+		*delimiter = '\0';
+
+		SetEnvironmentVariable("WLOG_APPENDER", "FILE");
+		SetEnvironmentVariable("WLOG_FILEAPPENDER_OUTPUT_FILE_PATH", logFilePath);
+		SetEnvironmentVariable("WLOG_FILEAPPENDER_OUTPUT_FILE_NAME", logFileName);
+
+		WLog_SetLogAppenderType(wLogRoot, WLOG_APPENDER_FILE);
+		wLogAppender = WLog_GetLogAppender(wLogRoot);
+		WLog_FileAppender_SetOutputFilePath(wLogRoot, (wLogFileAppender*) wLogAppender, logFilePath);
+		WLog_FileAppender_SetOutputFileName(wLogRoot, (wLogFileAppender*) wLogAppender, logFileName);
 	}
+	else
+	{
+		/* Set up logging to the console. */
+		SetEnvironmentVariable("WLOG_APPENDER", "CONSOLE");
+
+		WLog_SetLogAppenderType(wLogRoot, WLOG_APPENDER_CONSOLE);
+		wLogAppender = WLog_GetLogAppender(wLogRoot);
+		WLog_ConsoleAppender_SetOutputStream(wLogRoot, (wLogConsoleAppender*) wLogAppender, WLOG_CONSOLE_STDOUT);
+	}
+
+	WLog_OpenAppender(wLogRoot);
+
+	WLog_DBG("main", "started");
 
 	g_TermEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
