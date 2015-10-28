@@ -34,7 +34,7 @@
 
 namespace freerds
 {
-	static wLog* logger_FDSApiHandler = WLog_Get("freerds.fdsapihandler");
+	static wLog* logger_FDSApiHandler = WLog_Get("freerds.FDSApiHandler");
 
 	FDSApiHandler::FDSApiHandler()
 	{

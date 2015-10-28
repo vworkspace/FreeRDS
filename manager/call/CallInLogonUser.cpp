@@ -286,6 +286,7 @@ namespace freerds
 
 		if (!currentSession->startModule(greeter))
 		{
+			WLog_Print(logger_CallInLogonUser, WLOG_ERROR, "could not start greeter");
 			mResult = 1;// will report error with answer
 			return 1;
 		}

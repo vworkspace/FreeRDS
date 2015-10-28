@@ -46,7 +46,6 @@ namespace freerds
 	{
 		m_HeaderBuffer = (BYTE*) &m_Header;
 		m_hStopEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
-		WLog_SetLogLevel(logger_RPCEngine, WLOG_ERROR);
 	}
 
 	RpcEngine::~RpcEngine()

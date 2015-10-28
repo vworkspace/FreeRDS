@@ -34,7 +34,7 @@
 
 namespace freerds
 {
-	static wLog* logger_FDSApiServer = WLog_Get("FreeRDS.FDSApiServer");
+	static wLog* logger_FDSApiServer = WLog_Get("freerds.FDSApiServer");
 
 	shared_ptr<FDSApiHandler> FDSApiServer::m_FDSApiHandler;
 

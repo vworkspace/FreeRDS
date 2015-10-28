@@ -33,7 +33,7 @@
 
 namespace freerds
 {
-	static wLog* logger_Module = WLog_Get("freerds.authmodule");
+	static wLog* logger_Module = WLog_Get("freerds.AuthModule");
 
 	AuthModule::AuthModule()
 		: mAuth(NULL),

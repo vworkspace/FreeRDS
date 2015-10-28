@@ -27,7 +27,7 @@
 
 namespace freerds
 {
-	static wLog* logger_Module = WLog_Get("freerds.module");
+	static wLog* logger_Module = WLog_Get("freerds.Module");
 
 	Module::Module() : mfpNew(0), mfpFree(0), mfpStart(0), mfpStop(0)
 	{
