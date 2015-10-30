@@ -100,11 +100,6 @@ BOOL freerds_peer_post_connect(freerdp_peer* client)
 			client->settings->Username);
 	}
 
-	if (client->settings->KeyboardType == 7)
-	{
-		client->settings->KeyboardType = 4;
-	}
-
 	DesktopWidth = settings->DesktopWidth;
 	DesktopHeight = settings->DesktopHeight;
 	ColorDepth = settings->ColorDepth;
@@ -174,6 +169,11 @@ BOOL freerds_peer_activate(freerdp_peer* client)
 	WLog_INFO(TAG, "Client Activated");
 
 	settings = client->settings;
+
+	if (settings->KeyboardType == 7)
+	{
+		settings->KeyboardType = 4;
+	}
 
 	if (settings->ClientDir && (strcmp(settings->ClientDir, "librdp") == 0))
 	{
