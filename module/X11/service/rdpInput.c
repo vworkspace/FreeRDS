@@ -1049,7 +1049,8 @@ void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 	KeySym keySym;
 	int keycode;
 	int type;
-    int i, j;
+	int i, j;
+	BOOL shiftModifier;
 
 	WriteLog("%s: flags=%lx, code=%lx", __FUNCTION__, flags, code);
 
@@ -1059,6 +1060,7 @@ void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 	type = (flags & KBD_FLAGS_RELEASE) ? KeyRelease : KeyPress;
 
 	keycode = 0;
+	shiftModifier = FALSE;
 
 	WriteLog("minKeyCode=%d, maxKeyCode=%d, mapWidth=%d",
 		pKeySyms->minKeyCode, pKeySyms->maxKeyCode, pKeySyms->mapWidth);
@@ -1072,6 +1074,11 @@ void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 			{
 				WriteLog("%s: Translated keySym=0x%04x to keyCode=%d", __FUNCTION__, keySym, i);
 				keycode = i;
+				if (j != 0)
+				{
+					shiftModifier = TRUE;
+				}
+				break;
 			}
 		}
     }
@@ -1080,8 +1087,33 @@ void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 	{
 		if (type == KeyPress)
 		{
+			int shiftKeycode = 0;
+			if (shiftModifier)
+			{
+				for (i = pKeySyms->minKeyCode; i <= pKeySyms->maxKeyCode; i++)
+				{
+					KeySym *pmap = &pKeySyms->map[(i - pKeySyms->minKeyCode) * pKeySyms->mapWidth];
+					for (j = 0; j < pKeySyms->mapWidth; j++)
+					{
+						if (pmap[j] == XK_Shift_L)
+						{
+							shiftKeycode = i;
+							goto found;
+						}
+					}
+				}
+			}
+found:
+			if (shiftModifier)
+			{
+				rdpEnqueueKey(KeyPress, shiftKeycode)
+			}
 			rdpEnqueueKey(KeyPress, keycode);
 			rdpEnqueueKey(KeyRelease, keycode);
+			if (shiftModifier)
+			{
+				rdpEnqueueKey(KeyRelease, shiftKeycode)
+			}
 		}
 		else
 		{
