@@ -118,6 +118,9 @@ CMAKE_URL=http://www.cmake.org/files/v2.8/$CMAKE_ARCHIVE
 
 RESULT=`cmake --version`
 if [ "$RESULT" == "" ]; then
+  # Ensure the Downloads folder exists
+  mkdir -p ~/Downloads
+
   # Download compressed archive
   pushd ~/Downloads
   wget $CMAKE_URL
