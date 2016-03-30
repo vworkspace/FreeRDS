@@ -103,11 +103,11 @@ export LD_LIBRARY_PATH=/usr/lib
 #
 case $LINUX_DISTRO_NAME in
   Ubuntu|Debian)
-    sudo apt-get install -y build-essential libcurl-dev
+    sudo apt-get install -y build-essential libcurl-dev zlib-dev
     ;;
   CentOS)
     sudo yum groupinstall -y "Development Tools"
-    sudo yum install -y libcurl-devel
+    sudo yum install -y libcurl-devel zlib-devel
     ;;
 esac
 
