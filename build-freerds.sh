@@ -103,10 +103,11 @@ export LD_LIBRARY_PATH=/usr/lib
 #
 case $LINUX_DISTRO_NAME in
   Ubuntu|Debian)
-    sudo apt-get install -y build-essential
+    sudo apt-get install -y build-essential libcurl-dev
     ;;
   CentOS)
     sudo yum groupinstall -y "Development Tools"
+    sudo yum install -y libcurl-devel
     ;;
 esac
 
@@ -126,7 +127,7 @@ if [ "$RESULT" == "" ]; then
   pushd ~/Downloads
   tar xvf $CMAKE_ARCHIVE
   pushd $CMAKE_FOLDER 
-  ./configure
+  ./configure --system-curl
   make
   sudo make install
   popd
