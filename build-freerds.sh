@@ -111,10 +111,10 @@ case $LINUX_DISTRO_NAME in
     ;;
 esac
 
-CMAKE_VERSION=2.8.12
+CMAKE_VERSION=3.2.3
 CMAKE_FOLDER=cmake-$CMAKE_VERSION
 CMAKE_ARCHIVE=$CMAKE_FOLDER.tar.gz
-CMAKE_URL=http://www.cmake.org/files/v2.8/$CMAKE_ARCHIVE
+CMAKE_URL=https://www.cmake.org/files/v3.2/$CMAKE_ARCHIVE
 
 RESULT=`cmake --version`
 if [ "$RESULT" == "" ]; then
@@ -123,7 +123,7 @@ if [ "$RESULT" == "" ]; then
 
   # Download compressed archive
   pushd ~/Downloads
-  wget $CMAKE_URL
+  wget --no-check-certificate $CMAKE_URL
   popd
 
   # Unpack compressed archive
