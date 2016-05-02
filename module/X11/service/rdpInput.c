@@ -220,8 +220,8 @@ static KeySym g_kbdMap[] =
 	NoSymbol,        NoSymbol
 };
 
-#if 0
-static void WriteLog(const char* format, ...)
+#if 1
+void WriteLog(const char* format, ...)
 {
 	char filename[MAX_PATH];
 	va_list argList;
