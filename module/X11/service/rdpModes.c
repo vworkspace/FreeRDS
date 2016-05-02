@@ -84,6 +84,12 @@ UINT32 g_StandardSizes[24] =
 	DEFINE_SCREEN_SIZE(640, 480)
 };
 
+#if 1
+extern void WriteLog(const char *format, ...);
+#else
+#define WriteLog(format,...)
+#endif
+
 EDID* rdpConstructScreenEdid(ScreenPtr pScreen)
 {
 	EDID* edid;
@@ -476,19 +482,28 @@ int rdpWriteGnomeMonitorConfig(ScreenPtr pScreen, int width, int height)
 	length = strlen(monitors_xml);
 
 	monitors_xml_path = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "monitors.xml");
+	WriteLog("%s: path='%s'", __FUNCTION__, monitors_xml_path);
 
+	WriteLog("%s: checking for monitors.xml file", __FUNCTION__);
 	if (PathFileExistsA(monitors_xml_path))
 	{
+		WriteLog("%s: deleting monitors.xml file", __FUNCTION__);
 		DeleteFileA(monitors_xml_path);
 	}
 
+	WriteLog("%s: opening monitors.xml file", __FUNCTION__);
 	fp = fopen(monitors_xml_path, "w+b");
 
 	if (fp)
 	{
+		WriteLog("%s: writing monitors.xml file", __FUNCTION__);
 		fwrite((void*) monitors_xml, length, 1, fp);
 		fflush(fp);
 		fclose(fp);
+	}
+	else
+	{
+		WriteLog("%s: error opening monitors.xml", __FUNCTION__);
 	}
 
 	free(monitors_xml_path);
