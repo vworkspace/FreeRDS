@@ -275,25 +275,6 @@ static char *unquote_string(char *string)
 	return string;
 }
 
-static void wait_for_home_directory(const char* home_path)
-{
-	static int retries = 3;
-
-	int i;
-
-	/* Wait for the user's home directory to be created. */
-	for (i = 0; i < retries; i++)
-	{
-		FILE *fp = fopen(home_path, "r");
-		if (fp != NULL)
-		{
-			fclose(fp);
-			break;
-		}
-		Sleep(1000);
-	}
-}
-
 char* x11_rds_module_start(RDS_MODULE_COMMON* module)
 {
 	static const char* envNames[] = {
@@ -352,7 +333,6 @@ char* x11_rds_module_start(RDS_MODULE_COMMON* module)
 	if (GetUserProfileDirectoryA(x11->commonModule.userToken, currentDir, &cchSize))
 	{
 		WLog_Print(gModuleLog, WLOG_DEBUG, "HOME=%s", currentDir);
-		wait_for_home_directory(currentDir);
 		lpCurrentDir = currentDir;
 	}
 

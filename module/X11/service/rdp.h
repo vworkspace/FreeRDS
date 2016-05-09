@@ -206,4 +206,10 @@ typedef rdpPixmapRec* rdpPixmapPtr;
 #include "rdpInput.h"
 #include "rdpUpdate.h"
 
+#if 1
+extern void rdpWriteLog(const char *format, ...);
+#else
+#define rdpWriteLog(format,...)
+#endif
+
 #endif /* FREERDS_X11RDP_MAIN_H */
