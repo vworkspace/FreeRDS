@@ -220,33 +220,6 @@ static KeySym g_kbdMap[] =
 	NoSymbol,        NoSymbol
 };
 
-#if 1
-void WriteLog(const char* format, ...)
-{
-	char filename[MAX_PATH];
-	va_list argList;
-	FILE *fp;
-
-	sprintf(filename, "/tmp/Xrds-%d", getpid());
-	fp = fopen(filename, "a");
-	if (fp)
-	{
-		char timestamp[30];
-		time_t gmtTime = time(NULL);
-		struct tm *tm = localtime(&gmtTime);
-		strftime(timestamp, sizeof(timestamp), "%d-%b-%Y %H:%M:%D", tm);
-		va_start(argList, format);
-		fprintf(fp, "%s - ", timestamp);
-		vfprintf(fp, format, argList);
-		fprintf(fp, "\n");
-		va_end(argList);
-		fclose(fp);
-	}
-}
-#else
-#define WriteLog(format,...)
-#endif
-
 void KbdDeviceInit(DeviceIntPtr pDevice, KeySymsPtr pKeySyms, CARD8 *pModMap)
 {
 	int i;
@@ -434,7 +407,7 @@ int rdpKeybdProc(DeviceIntPtr pDevice, int onoff)
 				}
 			}
 
-			WriteLog("kbdTable=%s, kbdModel=%s, kbdLayout=%s, kbdVariant=%s, kbdOptions=%s",
+			rdpWriteLog("kbdTable=%s, kbdModel=%s, kbdLayout=%s, kbdVariant=%s, kbdOptions=%s",
 				kbdTable, kbdModel, kbdLayout, kbdVariant, kbdOptions);
 
 			ZeroMemory(&set, sizeof(set));
@@ -507,7 +480,7 @@ int rdpMouseProc(DeviceIntPtr pDevice, int onoff)
 	Atom btn_labels[10];
 	Atom axes_labels[3];
 
-	WriteLog("%s: pDevice=%p, onoff=%d", __FUNCTION__, pDevice, onoff);
+	rdpWriteLog("%s: pDevice=%p, onoff=%d", __FUNCTION__, pDevice, onoff);
 
 	pDev = (DevicePtr) pDevice;
 
@@ -960,7 +933,7 @@ void PtrAddMotionEvent(int x, int y)
 	static int sx = 0;
 	static int sy = 0;
 
-	WriteLog("%s: x=%d, y=%d", __FUNCTION__, x, y);
+	rdpWriteLog("%s: x=%d, y=%d", __FUNCTION__, x, y);
 
 	if ((sx != x) || (sy != y))
 		rdpEnqueueMotion(x, y);
@@ -975,7 +948,7 @@ void PtrAddButtonEvent(int buttonMask)
 	int type;
 	int buttons;
 
-	WriteLog("%s: buttonMask=%x", __FUNCTION__, buttonMask);
+	rdpWriteLog("%s: buttonMask=%x", __FUNCTION__, buttonMask);
 
 	for (i = 0; i < 10; i++)
 	{
@@ -1007,7 +980,7 @@ void KbdAddScancodeEvent(DWORD flags, DWORD scancode, DWORD keyboardType)
 	DWORD vkcodeWithFlags;
 	DWORD scancodeWithFlags;
 
-	WriteLog("%s: flags=%lx, scancode=%lx, keyboardType=%lx", __FUNCTION__, flags, scancode, keyboardType);
+	rdpWriteLog("%s: flags=%lx, scancode=%lx, keyboardType=%lx", __FUNCTION__, flags, scancode, keyboardType);
 
 	type = (flags & KBD_FLAGS_RELEASE) ? KeyRelease : KeyPress;
 
@@ -1032,7 +1005,7 @@ void KbdAddVirtualKeyCodeEvent(DWORD flags, DWORD vkcode)
 	int keycode;
 	DWORD vkcodeWithFlags;
 
-	WriteLog("%s: flags=%lx, vkcode=%lx", __FUNCTION__, flags, vkcode);
+	rdpWriteLog("%s: flags=%lx, vkcode=%lx", __FUNCTION__, flags, vkcode);
 
 	type = (flags & KBD_FLAGS_DOWN) ? KeyPress : KeyRelease;
 
@@ -1045,13 +1018,13 @@ void KbdAddVirtualKeyCodeEvent(DWORD flags, DWORD vkcode)
 
 void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 {
-    KeySymsPtr pKeySyms;
+	KeySymsPtr pKeySyms;
 	KeySym keySym;
 	int keycode;
 	int type;
-    int i, j;
+	int i, j;
 
-	WriteLog("%s: flags=%lx, code=%lx", __FUNCTION__, flags, code);
+	rdpWriteLog("%s: flags=%lx, code=%lx", __FUNCTION__, flags, code);
 
 	pKeySyms = XkbGetCoreMap(g_keyboard);
 	keySym = code;
@@ -1060,21 +1033,21 @@ void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 
 	keycode = 0;
 
-	WriteLog("minKeyCode=%d, maxKeyCode=%d, mapWidth=%d",
+	rdpWriteLog("minKeyCode=%d, maxKeyCode=%d, mapWidth=%d",
 		pKeySyms->minKeyCode, pKeySyms->maxKeyCode, pKeySyms->mapWidth);
 
-    for (i = pKeySyms->minKeyCode; i <= pKeySyms->maxKeyCode; i++)
+	for (i = pKeySyms->minKeyCode; i <= pKeySyms->maxKeyCode; i++)
 	{
 		KeySym *pmap = &pKeySyms->map[(i - pKeySyms->minKeyCode) * pKeySyms->mapWidth];
 		for (j = 0; j < pKeySyms->mapWidth; j++)
 		{
 			if (pmap[j] == keySym)
 			{
-				WriteLog("%s: Translated keySym=0x%04x to keyCode=%d", __FUNCTION__, keySym, i);
+				rdpWriteLog("%s: Translated keySym=0x%04x to keyCode=%d", __FUNCTION__, keySym, i);
 				keycode = i;
 			}
 		}
-    }
+	}
 
 	if (keycode != 0)
 	{

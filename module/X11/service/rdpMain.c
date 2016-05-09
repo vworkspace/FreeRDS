@@ -43,6 +43,7 @@
 #include <sys/stat.h>
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <winpr/pipe.h>
 
 #if 0
@@ -501,6 +502,33 @@ Bool rdpScreenInit(int index, ScreenPtr pScreen, int argc, char** argv)
 	return ret;
 }
 
+static void rdpWaitForHomeDirectory()
+{
+	static int retries = 3;
+
+	char* home_path;
+	int i;
+
+	home_path = GetKnownPath(KNOWN_PATH_HOME);
+	if (!home_path) return;
+
+	rdpWriteLog("%s: HOME='%s'", __FUNCTION__, home_path);
+
+	/* Wait for the user's home directory to be created. */
+	for (i = 0; i < retries; i++)
+	{
+		FILE *fp = fopen(home_path, "r");
+		if (fp != NULL)
+		{
+			fclose(fp);
+			break;
+		}
+		Sleep(1000);
+	}
+
+	free(home_path);
+}
+
 /* this is the first function called, it can be called many times
    returns the number or parameters processed
    if it dosen't apply to the rdp part, return 0 */
@@ -508,6 +536,9 @@ int ddxProcessArgument(int argc, char** argv, int i)
 {
 	if (g_firstTime)
 	{
+		/* Wait for the user's home directory to be created. */
+		rdpWaitForHomeDirectory();
+
 		ZeroMemory(&g_rdpScreen, sizeof(g_rdpScreen));
 		g_rdpScreen.width  = 1024;
 		g_rdpScreen.height = 768;
@@ -757,3 +788,28 @@ void DeleteInputDeviceRequest(DeviceIntPtr dev)
 {
 	DEBUG_OUT("DeleteInputDeviceRequest\n");
 }
+
+#ifndef rdpWriteLog
+void rdpWriteLog(const char* format, ...)
+{
+	char filename[MAX_PATH];
+	va_list argList;
+	FILE *fp;
+
+	sprintf(filename, "/tmp/Xrds-%d", getpid());
+	fp = fopen(filename, "a");
+	if (fp)
+	{
+		char timestamp[30];
+		time_t gmtTime = time(NULL);
+		struct tm *tm = localtime(&gmtTime);
+		strftime(timestamp, sizeof(timestamp), "%d-%b-%Y %H:%M:%D", tm);
+		va_start(argList, format);
+		fprintf(fp, "%s - ", timestamp);
+		vfprintf(fp, format, argList);
+		fprintf(fp, "\n");
+		va_end(argList);
+		fclose(fp);
+	}
+}
+#endif
