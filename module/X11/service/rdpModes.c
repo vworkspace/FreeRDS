@@ -366,6 +366,7 @@ static void rdpWaitForHomeDirectory()
 {
 	static int retries = 3;
 
+	char path[MAX_PATH];
 	char* home_path;
 	int i;
 
@@ -373,6 +374,13 @@ static void rdpWaitForHomeDirectory()
 	if (!home_path) return;
 
 	rdpWriteLog("%s: HOME='%s'", __FUNCTION__, home_path);
+
+	/* Ensure the home directory is created. */
+	mkdir(home_path, 0777);
+
+	/* Ensure the $HOME/.config directory is created. */
+	sprintf(path, "%s/.config", home_path);
+	mkdir(path, 0777);
 
 	/* Wait for the user's home directory to be created. */
 	for (i = 0; i < retries; i++)
