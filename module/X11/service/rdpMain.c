@@ -502,33 +502,6 @@ Bool rdpScreenInit(int index, ScreenPtr pScreen, int argc, char** argv)
 	return ret;
 }
 
-static void rdpWaitForHomeDirectory()
-{
-	static int retries = 3;
-
-	char* home_path;
-	int i;
-
-	home_path = GetKnownPath(KNOWN_PATH_HOME);
-	if (!home_path) return;
-
-	rdpWriteLog("%s: HOME='%s'", __FUNCTION__, home_path);
-
-	/* Wait for the user's home directory to be created. */
-	for (i = 0; i < retries; i++)
-	{
-		FILE *fp = fopen(home_path, "r");
-		if (fp != NULL)
-		{
-			fclose(fp);
-			break;
-		}
-		Sleep(1000);
-	}
-
-	free(home_path);
-}
-
 /* this is the first function called, it can be called many times
    returns the number or parameters processed
    if it dosen't apply to the rdp part, return 0 */
@@ -536,9 +509,6 @@ int ddxProcessArgument(int argc, char** argv, int i)
 {
 	if (g_firstTime)
 	{
-		/* Wait for the user's home directory to be created. */
-		rdpWaitForHomeDirectory();
-
 		ZeroMemory(&g_rdpScreen, sizeof(g_rdpScreen));
 		g_rdpScreen.width  = 1024;
 		g_rdpScreen.height = 768;

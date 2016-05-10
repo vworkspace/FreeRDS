@@ -362,6 +362,33 @@ void rdpSetOutputEdid(RROutputPtr output, EDID* edid)
 	free(buffer);
 }
 
+static void rdpWaitForHomeDirectory()
+{
+	static int retries = 3;
+
+	char* home_path;
+	int i;
+
+	home_path = GetKnownPath(KNOWN_PATH_HOME);
+	if (!home_path) return;
+
+	rdpWriteLog("%s: HOME='%s'", __FUNCTION__, home_path);
+
+	/* Wait for the user's home directory to be created. */
+	for (i = 0; i < retries; i++)
+	{
+		FILE *fp = fopen(home_path, "r");
+		if (fp != NULL)
+		{
+			fclose(fp);
+			break;
+		}
+		Sleep(1000);
+	}
+
+	free(home_path);
+}
+
 static const char* g_KScreenCfgFmt =
 "[ { \"enabled\" : %s, \"id\" : \"%s\", "
 "\"metadata\" : { \"fullname\" : \"%s\", \"name\" : \"%s\" }, "
@@ -559,6 +586,9 @@ int rdpWriteXfce4MonitorConfig(ScreenPtr pScreen, int width, int height)
 
 int rdpWriteMonitorConfig(ScreenPtr pScreen, int width, int height)
 {
+	/* Wait for the user's home directory to be created. */
+	rdpWaitForHomeDirectory();
+
 	rdpWriteGnomeMonitorConfig(pScreen, width, height);
 	rdpWriteXfce4MonitorConfig(pScreen, width, height);
 	rdpWriteKScreenMonitorConfig(pScreen, width, height);
