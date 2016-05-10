@@ -803,7 +803,7 @@ void rdpWriteLog(const char* format, ...)
 		char timestamp[30];
 		time_t gmtTime = time(NULL);
 		struct tm *tm = localtime(&gmtTime);
-		strftime(timestamp, sizeof(timestamp), "%d-%b-%Y %H:%M:%D", tm);
+		strftime(timestamp, sizeof(timestamp), "%d-%b-%Y %H:%M:%S", tm);
 		va_start(argList, format);
 		fprintf(fp, "%s - ", timestamp);
 		vfprintf(fp, format, argList);
