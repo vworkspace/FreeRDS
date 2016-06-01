@@ -174,7 +174,7 @@ case $LINUX_DISTRO_NAME in
     libfreetype6-dev libfontconfig1-dev libpixman-1-dev xutils-dev \
     x11proto-gl-dev mesa-common-dev libgl1-mesa-dev xorg-dev \
     libboost-dev qt4-dev-tools libjson-c-dev libsndfile1-dev \
-    libfuse-dev
+    libfuse-dev gnome-icon-theme-full
     ;;
 
   CentOS)
@@ -184,7 +184,7 @@ case $LINUX_DISTRO_NAME in
     libX11-devel libXfixes-devel libXfont-devel xorg-x11-proto-devel xorg-x11-xtrans-devel \
     flex bison libxslt perl-libxml-perl xorg-x11-font-utils xmlto-tex docbook-utils-pdf \
     boost-devel qt4-devel pulseaudio-libs-devel libtool-ltdl-devel libsndfile-devel speex-devel \
-    fuse-devel
+    fuse-devel gnome-icon-theme
     ;;
 esac
 
