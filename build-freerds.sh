@@ -104,7 +104,7 @@ export LD_LIBRARY_PATH=/usr/lib
 case $LINUX_DISTRO_NAME in
   Ubuntu|Debian)
     sudo apt-get install -y build-essential
-    sudo apt-get install libcurl4-openssl-dev libz-dev
+    sudo apt-get install -y libcurl4-openssl-dev libz-dev
     ;;
   CentOS)
     sudo yum groupinstall -y "Development Tools"
