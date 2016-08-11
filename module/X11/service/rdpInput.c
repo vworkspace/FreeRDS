@@ -906,7 +906,11 @@ static void rdpEnqueueKey(int type, int scancode)
 	nevents = GetMaximumEventsNum();
 	pEventList = InitEventList(nevents);
 
+#if (XORG_VERSION_CURRENT >= XORG_VERSION(1,18,0))
+	nevents = GetKeyboardEvents(pEventList, g_keyboard, type, scancode);
+#else
 	nevents = GetKeyboardEvents(pEventList, g_keyboard, type, scancode, NULL);
+#endif
 
 	for (i = 0; i < nevents; i++)
 		mieqProcessDeviceEvent(g_pointer, &pEventList[i], 0);
