@@ -187,7 +187,7 @@ case $LINUX_DISTRO_NAME in
     libX11-devel libXfixes-devel libXfont-devel xorg-x11-proto-devel xorg-x11-xtrans-devel \
     flex bison libxslt perl-libxml-perl xorg-x11-font-utils xmlto-tex docbook-utils-pdf \
     boost-devel qt4-devel pulseaudio-libs-devel libtool-ltdl-devel libsndfile-devel speex-devel \
-    fuse-devel libcap-devel
+    fuse-devel libcap-devel json-c-devel
     ;;
 esac
 
