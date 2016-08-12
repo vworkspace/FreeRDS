@@ -164,13 +164,13 @@ static void sink_update_requested_latency_cb(pa_sink *s)
 
 	context->block_usec = BLOCK_USEC;
 	//context->block_usec = pa_sink_get_requested_latency_within_thread(s);
-	pa_log("1 block_usec %d", context->block_usec);
+	pa_log("1 block_usec %lu", context->block_usec);
 
 	context->got_max_latency = 0;
 	if (context->block_usec == (pa_usec_t) -1)
 	{
 		context->block_usec = s->thread_info.max_latency;
-		pa_log_debug("2 block_usec %d", context->block_usec);
+		pa_log_debug("2 block_usec %lu", context->block_usec);
 		context->got_max_latency = 1;
 	}
 
@@ -321,13 +321,13 @@ static void process_render(struct context *context, pa_usec_t now)
 		return;
 	}
 
-	pa_log_debug("process_render: u->block_usec %d", context->block_usec);
+	pa_log_debug("process_render: u->block_usec %lu", context->block_usec);
 	while (context->timestamp < now + context->block_usec)
 	{
 		request_bytes = context->sink->thread_info.max_request;
 		request_bytes = MIN(request_bytes, 16 * 1024);
 		pa_sink_render(context->sink, request_bytes, &chunk);
-		pa_log("process_render: %d bytes", chunk.length);
+		pa_log("process_render: %lu bytes", chunk.length);
 		data_send(context, &chunk);
 		pa_memblock_unref(chunk.memblock);
 		context->timestamp += pa_bytes_to_usec(chunk.length, &context->sink->sample_spec);
@@ -375,7 +375,11 @@ static void thread_func(void *userdata)
 			pa_rtpoll_set_timer_disabled(context->rtpoll);
 		}
 
+#if PA_CHECK_VERSION(8,0,0)
+		if ((ret = pa_rtpoll_run(context->rtpoll)) < 0)
+#else
 		if ((ret = pa_rtpoll_run(context->rtpoll, TRUE)) < 0)
+#endif
 		{
 			goto FAIL;
 		}
@@ -471,7 +475,7 @@ int pa__init(pa_module *module)
 	pa_sink_set_rtpoll(context->sink, context->rtpoll);
 
 	context->block_usec = BLOCK_USEC;
-	pa_log_debug("3 block_usec %d", context->block_usec);
+	pa_log_debug("3 block_usec %lu", context->block_usec);
 	nbytes = pa_usec_to_bytes(context->block_usec, &context->sink->sample_spec);
 	pa_sink_set_max_rewind(context->sink, nbytes);
 	pa_sink_set_max_request(context->sink, nbytes);
