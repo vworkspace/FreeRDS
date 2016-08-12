@@ -38,6 +38,9 @@ include_directories(${${MODULE_PREFIX}_PULSEAUDIO_SRC}/src)
 
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
+get_filename_component(PULSE_LIBRARY_DIR ${PULSE_LIBRARY} DIRECTORY)
+link_directories(${PULSE_LIBRARY_DIR}/pulseaudio)
+
 set(${MODULE_PREFIX}_SRCS
 	module-freerds-sink.c
 	../rdpsnd_plugin_api.c
