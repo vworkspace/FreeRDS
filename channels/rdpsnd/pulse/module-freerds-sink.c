@@ -375,7 +375,7 @@ static void thread_func(void *userdata)
 			pa_rtpoll_set_timer_disabled(context->rtpoll);
 		}
 
-#if PA_CHECK_VERSION(1,0,0)
+#if PA_CHECK_VERSION(5,0,0)
 		if ((ret = pa_rtpoll_run(context->rtpoll)) < 0)
 #else
 		if ((ret = pa_rtpoll_run(context->rtpoll, TRUE)) < 0)
