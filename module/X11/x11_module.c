@@ -57,6 +57,8 @@ RDS_MODULE_STATUS_CALLBACKS g_Status;
 #define X11_UNIX_SOCKET_FORMAT "/tmp/.X11-unix/X%d"
 #define X11_DISPLAY_MAX 1024
 
+#define USE_IMPERSONATION 1
+
 static wLog* gModuleLog;
 
 struct rds_module_x11
@@ -416,7 +418,11 @@ char* x11_rds_module_start(RDS_MODULE_COMMON* module)
 	/* Start the FreeRDS channel server. */
 	strcpy(startupname, "freerds-channels");
 
+#if USE_IMPERSONATION
+	status = CreateProcess(NULL, startupname,
+#else
 	status = CreateProcessAsUserA(x11->commonModule.userToken, NULL, startupname,
+#endif
 		NULL, NULL, FALSE, 0, x11->commonModule.envBlock, NULL,
 		&(x11->CSStartupInfo), &(x11->CSProcessInformation));
 

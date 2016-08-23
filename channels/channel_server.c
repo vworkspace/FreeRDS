@@ -40,6 +40,8 @@
 
 #include "channel_utils.h"
 
+#define USE_IMPERSONATION 1
+
 static const char *g_standardPlugins[] =
 {
 	"libfreerds-cliprdr-plugin",
@@ -350,7 +352,7 @@ static void fire_session_event(int event)
 		/*   have the virtual channel plugin advertise whether or not */
 		/*   impersonation is required. */
 		impersonate = FALSE;
-#if 0
+#if USE_IMPERSONATION
 		if (((event == WTS_EVENT_LOGON) || (event == WTS_EVENT_LOGOFF)) &&
 			(_stricmp(pVCPlugin->name, "RDPDR") == 0))
 		{
