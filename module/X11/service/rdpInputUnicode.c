@@ -4,6 +4,7 @@
 #include <X11/XKBlib.h>
 #include <X11/keysym.h>
 
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <winpr/collections.h>
@@ -941,7 +942,7 @@ void start_asynchronous_unicode_input_processing_thread()
 void stop_asynchronous_unicode_input_processing_thread()
 {
 	g_cancelUnicodeThread = 1;
-	pthread_join(NULL, g_unicodeThread);
+	pthread_join(g_unicodeThread, NULL);
 	Queue_Free(g_unicodeInputQueue);
 }
 
