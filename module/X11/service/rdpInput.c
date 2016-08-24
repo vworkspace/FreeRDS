@@ -34,6 +34,7 @@
 #include <winpr/path.h>
 
 #include "rdpInput.h"
+#include "rdpInputUnicode.h"
 
 extern DeviceIntPtr g_pointer;
 extern DeviceIntPtr g_keyboard;
@@ -1022,49 +1023,8 @@ void KbdAddVirtualKeyCodeEvent(DWORD flags, DWORD vkcode)
 
 void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 {
-	KeySymsPtr pKeySyms;
-	KeySym keySym;
-	int keycode;
-	int type;
-	int i, j;
-
 	rdpWriteLog("%s: flags=%lx, code=%lx", __FUNCTION__, flags, code);
-
-	pKeySyms = XkbGetCoreMap(g_keyboard);
-	keySym = code;
-
-	type = (flags & KBD_FLAGS_RELEASE) ? KeyRelease : KeyPress;
-
-	keycode = 0;
-
-	rdpWriteLog("minKeyCode=%d, maxKeyCode=%d, mapWidth=%d",
-		pKeySyms->minKeyCode, pKeySyms->maxKeyCode, pKeySyms->mapWidth);
-
-	for (i = pKeySyms->minKeyCode; i <= pKeySyms->maxKeyCode; i++)
-	{
-		KeySym *pmap = &pKeySyms->map[(i - pKeySyms->minKeyCode) * pKeySyms->mapWidth];
-		for (j = 0; j < pKeySyms->mapWidth; j++)
-		{
-			if (pmap[j] == keySym)
-			{
-				rdpWriteLog("%s: Translated keySym=0x%04x to keyCode=%d", __FUNCTION__, keySym, i);
-				keycode = i;
-			}
-		}
-	}
-
-	if (keycode != 0)
-	{
-		if (type == KeyPress)
-		{
-			rdpEnqueueKey(KeyPress, keycode);
-			rdpEnqueueKey(KeyRelease, keycode);
-		}
-		else
-		{
-			rdpEnqueueKey(type, keycode);
-		}
-	}
+	postUnicodeInputEvent(code, flags, rdpEnqueueKey);
 }
 
 static void kbdSyncState(int xkb_flags, int rdp_flags, int keycode)

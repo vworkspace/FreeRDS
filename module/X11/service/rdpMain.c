@@ -24,6 +24,7 @@
 #include "rdp.h"
 #include "rdpRandr.h"
 #include "rdpScreen.h"
+#include "rdpInputUnicode.h"
 
 #if (XORG_VERSION_CURRENT >= XORG_VERSION(1,13,0))
 #include "glx_extinit.h"
@@ -45,6 +46,7 @@
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/pipe.h>
+#include <winpr/collections.h>
 
 #if 0
 #define DEBUG_OUT(fmt, ...) ErrorF(fmt, ##__VA_ARGS__)
@@ -670,6 +672,7 @@ void InitInput(int argc, char** argv)
 	}
 
 	mieqInit();
+	start_asynchronous_unicode_input_processing_thread();
 }
 
 #if (XORG_VERSION_CURRENT >= XORG_VERSION(1,11,0))
@@ -747,6 +750,7 @@ void OsVendorPreInit(void)
 void CloseInput(void)
 {
 	DEBUG_OUT("CloseInput\n");
+	stop_asynchronous_unicode_input_processing_thread();
 }
 
 void DDXRingBell(int volume, int pitch, int duration)

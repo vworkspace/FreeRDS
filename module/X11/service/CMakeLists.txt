@@ -143,6 +143,8 @@ set(${MODULE_PREFIX}_SRCS
 	rdpGCOps.h
 	rdpInput.c
 	rdpInput.h
+	rdpInputUnicode.c
+	rdpInputUnicode.h
 	rdpMain.c
 	rdpMisc.c
 	rdpRandr.c
@@ -307,7 +309,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 add_dependencies(${MODULE_NAME} xorg-server)
 
-set(${MODULE_PREFIX}_LIBS z m freetype rt crypto dl ${CMAKE_THREAD_LIBS_INIT})
+set(${MODULE_PREFIX}_LIBS z m freetype rt crypto dl X11 ${CMAKE_THREAD_LIBS_INIT})
 
 list(APPEND ${MODULE_PREFIX}_LIBS winpr)
 
