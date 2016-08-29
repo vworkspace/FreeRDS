@@ -206,7 +206,7 @@ typedef rdpPixmapRec* rdpPixmapPtr;
 #include "rdpInput.h"
 #include "rdpUpdate.h"
 
-#if 1
+#if 0
 extern void rdpWriteLog(const char *format, ...);
 #else
 #define rdpWriteLog(format,...)
