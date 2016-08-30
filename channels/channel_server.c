@@ -262,12 +262,12 @@ static void impersonate_user(const char *username)
 	passwd = getpwnam(username);
 	if (passwd)
 	{
-		g_savedUID = getuid();
-		g_savedGID = getgid();
+		g_savedUID = geteuid();
+		g_savedGID = getegid();
 
 		initgroups(passwd->pw_name, passwd->pw_gid);
-		setgid(passwd->pw_gid);
-		setuid(passwd->pw_uid);
+		seteuid(passwd->pw_uid);
+		setegid(passwd->pw_gid);
 	}
 }
 
@@ -280,8 +280,8 @@ static void revert_to_self()
 	passwd = getpwuid(0);
 	if (passwd)
 	{
-		setuid(g_savedUID);
-		setgid(g_savedGID);
+		seteuid(g_savedUID);
+		setegid(g_savedGID);
 		initgroups(passwd->pw_name, passwd->pw_gid);
 	}
 }
