@@ -297,7 +297,11 @@ static void rdpsnd_plugin_on_plugin_terminate(VCPlugin *plugin)
 
 static void rdpsnd_plugin_on_session_create(VCPlugin *plugin)
 {
+	static const char *pactlCommand = "pactl load-module module-freerds-sink";
+
 	RdpsndPluginContext *context;
+	const char *username;
+	char command[512];
 
 	context = (RdpsndPluginContext *) plugin->context;
 
@@ -306,7 +310,16 @@ static void rdpsnd_plugin_on_session_create(VCPlugin *plugin)
 	WLog_Print(context->log, WLOG_DEBUG, "on_session_create");
 
 	/* Load the pulseaudio sink for FreeRDS. */
-	system("pactl load-module module-freerds-sink");
+	username = getenv("USER");
+	if (username)
+	{
+		sprintf(command, "sudo -u %s %s", username, pactlCommand);
+		system(command);
+	}
+	else
+	{
+		system(pactlCommand);
+	}
 }
 
 static void rdpsnd_plugin_on_session_delete(VCPlugin *plugin)
