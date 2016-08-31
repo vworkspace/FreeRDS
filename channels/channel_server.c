@@ -253,9 +253,11 @@ static int pam_conversation(
 static uid_t g_savedUID;
 static gid_t g_savedGID;
 
-static void impersonate_user(const char *username)
+static BOOL impersonate_user(const char *username)
 {
 	struct passwd *passwd;
+
+	if (!username) return FALSE;
 
 	WLog_Print(g_logger, WLOG_INFO, "impersonating user '%s'", username);
 
@@ -269,6 +271,8 @@ static void impersonate_user(const char *username)
 		seteuid(passwd->pw_uid);
 		setegid(passwd->pw_gid);
 	}
+
+	return TRUE;
 }
 
 static void revert_to_self()
@@ -289,8 +293,11 @@ static void revert_to_self()
 static void fire_session_event(int event)
 {
 	const char *username;
+	BOOL impersonate;
 	int count;
 	int i;
+
+	impersonate = FALSE;
 
 	username = getenv("USER");
 
@@ -337,7 +344,7 @@ static void fire_session_event(int event)
 
 #if USE_IMPERSONATION
 	/* Impersonate the logged on user. */
-	impersonate_user(username);
+	impersonate = impersonate_user(username);
 #endif
 
 	/* Deliver the event to every plugin. */
@@ -399,10 +406,11 @@ static void fire_session_event(int event)
 		}
 	}
 
-#if USE_IMPERSONATION
 	/* Stop impersonatation. */
-	revert_to_self();
-#endif
+	if (impersonate)
+	{
+		revert_to_self();
+	}
 }
 
 static void process_ts_events()
