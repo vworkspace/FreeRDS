@@ -335,36 +335,19 @@ static void fire_session_event(int event)
 		}
 	}
 
+#if USE_IMPERSONATION
+	/* Impersonate the logged on user. */
+	impersonate_user(username);
+#endif
+
 	/* Deliver the event to every plugin. */
 	count = ArrayList_Count(g_pluginList);
 
 	for (i = 0; i < count; i++)
 	{
 		VCPlugin *pVCPlugin;
-		BOOL impersonate;
 
 		pVCPlugin = (VCPlugin *) ArrayList_GetItem(g_pluginList, i);
-
-		/* Determine if impersonation is required. */
-
-		/* TODO: Right now we only impersonate on RDPDR for the logon */
-		/*   and logoff events.  In the next version of FreeRDS, we need */
-		/*   have the virtual channel plugin advertise whether or not */
-		/*   impersonation is required. */
-		impersonate = FALSE;
-#if USE_IMPERSONATION
-		if (((event == WTS_EVENT_LOGON) || (event == WTS_EVENT_LOGOFF)) &&
-			(_stricmp(pVCPlugin->name, "RDPDR") == 0))
-		{
-			impersonate = TRUE;
-		}
-#endif
-
-		/* Impersonate the logged on user. */
-		if (impersonate)
-		{
-			impersonate_user(username);
-		}
 
 		/* Deliver the event. */
 		switch (event)
@@ -414,13 +397,12 @@ static void fire_session_event(int event)
 			default:
 				break;
 		}
-
-		/* Stop impersonatation. */
-		if (impersonate)
-		{
-			revert_to_self();
-		}
 	}
+
+#if USE_IMPERSONATION
+	/* Stop impersonatation. */
+	revert_to_self();
+#endif
 }
 
 static void process_ts_events()
