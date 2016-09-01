@@ -34,7 +34,6 @@
 #include <winpr/path.h>
 
 #include "rdpInput.h"
-#include "rdpInputUnicode.h"
 
 extern DeviceIntPtr g_pointer;
 extern DeviceIntPtr g_keyboard;
@@ -900,24 +899,6 @@ static void rdpEnqueueButton(int type, int buttons)
 
 static void rdpEnqueueKey(int type, int scancode)
 {
-	/*
-         * Allow key repeat to be governed by the speed of the client.  If
-         * the event is a KeyPress event and it matches the scancode from
-         * the previous event with no intervening KeyRelease event, then
-         * insert a KeyRelease event to implement key repeat.
-         */
-
-	static int last_type;
-	static int last_scancode;
-
-	if ((type == KeyPress) && (type == last_type) && (scancode == last_scancode))
-	{
-		rdpEnqueueKey(KeyRelease, scancode);
-	}
-
-	last_type = type;
-	last_scancode = scancode;
-
 #if (XORG_VERSION_CURRENT >= XORG_VERSION(1,11,0))
 	int i, nevents;
 	InternalEvent* pEventList;
@@ -1041,8 +1022,49 @@ void KbdAddVirtualKeyCodeEvent(DWORD flags, DWORD vkcode)
 
 void KbdAddUnicodeEvent(DWORD flags, DWORD code)
 {
+	KeySymsPtr pKeySyms;
+	KeySym keySym;
+	int keycode;
+	int type;
+	int i, j;
+
 	rdpWriteLog("%s: flags=%lx, code=%lx", __FUNCTION__, flags, code);
-	postUnicodeInputEvent(code, flags, rdpEnqueueKey);
+
+	pKeySyms = XkbGetCoreMap(g_keyboard);
+	keySym = code;
+
+	type = (flags & KBD_FLAGS_RELEASE) ? KeyRelease : KeyPress;
+
+	keycode = 0;
+
+	rdpWriteLog("minKeyCode=%d, maxKeyCode=%d, mapWidth=%d",
+		pKeySyms->minKeyCode, pKeySyms->maxKeyCode, pKeySyms->mapWidth);
+
+	for (i = pKeySyms->minKeyCode; i <= pKeySyms->maxKeyCode; i++)
+	{
+		KeySym *pmap = &pKeySyms->map[(i - pKeySyms->minKeyCode) * pKeySyms->mapWidth];
+		for (j = 0; j < pKeySyms->mapWidth; j++)
+		{
+			if (pmap[j] == keySym)
+			{
+				rdpWriteLog("%s: Translated keySym=0x%04x to keyCode=%d", __FUNCTION__, keySym, i);
+				keycode = i;
+			}
+		}
+	}
+
+	if (keycode != 0)
+	{
+		if (type == KeyPress)
+		{
+			rdpEnqueueKey(KeyPress, keycode);
+			rdpEnqueueKey(KeyRelease, keycode);
+		}
+		else
+		{
+			rdpEnqueueKey(type, keycode);
+		}
+	}
 }
 
 static void kbdSyncState(int xkb_flags, int rdp_flags, int keycode)
