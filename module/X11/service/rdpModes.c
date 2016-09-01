@@ -376,11 +376,11 @@ static void rdpWaitForHomeDirectory()
 	rdpWriteLog("%s: HOME='%s'", __FUNCTION__, home_path);
 
 	/* Ensure the home directory is created. */
-	mkdir(home_path, 0777);
+	mkdir(home_path, 0700);
 
 	/* Ensure the $HOME/.config directory is created. */
 	sprintf(path, "%s/.config", home_path);
-	mkdir(path, 0777);
+	mkdir(path, 0700);
 
 	/* Wait for the user's home directory to be created. */
 	for (i = 0; i < retries; i++)
