@@ -899,6 +899,24 @@ static void rdpEnqueueButton(int type, int buttons)
 
 static void rdpEnqueueKey(int type, int scancode)
 {
+	/*
+         * Allow key repeat to be governed by the speed of the client.  If
+         * the event is a KeyPress event and it matches the scancode from
+         * the previous event with no intervening KeyRelease event, then
+         * insert a KeyRelease event to implement key repeat.
+         */
+
+	static int last_type;
+	static int last_scancode;
+
+	if ((type == KeyPress) && (type == last_type) && (scancode == last_scancode))
+	{
+		rdpEnqueueKey(KeyRelease, scancode);
+	}
+
+	last_type = type;
+	last_scancode = scancode;
+
 #if (XORG_VERSION_CURRENT >= XORG_VERSION(1,11,0))
 	int i, nevents;
 	InternalEvent* pEventList;
