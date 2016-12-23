@@ -112,6 +112,7 @@ int freerds_client_get_event_handles(rdsBackend* backend, HANDLE* events, DWORD*
 
 int freerds_client_check_event_handles(rdsBackend* backend)
 {
+	int count = 0;
 	int status = 0;
 	rdsConnection* connection;
 	rdsBackendConnector* connector = (rdsBackendConnector*) backend;
@@ -127,6 +128,7 @@ int freerds_client_check_event_handles(rdsBackend* backend)
 			break;
 
 		status = freerds_message_server_queue_process_pending_messages(connector);
+		if (++count == 10) break;
 	}
 
 	if (WaitForSingleObject(connector->ServerThread, 0) == WAIT_OBJECT_0)
