@@ -114,6 +114,25 @@ static int g_rdp_opcodes[16] =
 	g = ((c) >> 8) & 0xff; \
 	b = (c) & 0xff; \
 		}
+static void DrawinInputHandlerNotify(int fd, int ready, void *data){}
+
+static void remove_notify_fd(int clientFd)
+{
+#if(XORG_VERSION_CURRENT >= XORG_VERSION(1,19,0))
+	RemoveNotifyFd(clientFd);
+#else
+	RemoveEnabledDevice(clientFd);
+#endif
+}
+
+static void set_notify_fd(int clientFd)
+{
+#if(XORG_VERSION_CURRENT >= XORG_VERSION(1,19,0))
+	SetNotifyFd(clientFd, DrawinInputHandlerNotify, X_NOTIFY_READ, NULL);
+#else
+	AddEnabledDevice(clientFd);
+#endif
+}
 
 int convert_pixel(int in_pixel)
 {
@@ -548,7 +567,7 @@ int rds_service_accept(rdsBackendService* service)
 {
 	HANDLE hServerPipe;
 	hServerPipe = service->hServerPipe;
-	RemoveEnabledDevice(GetNamePipeFileDescriptor(hServerPipe));
+	remove_notify_fd(GetNamePipeFileDescriptor(hServerPipe));
 
 	service->hServerPipe = freerds_named_pipe_create_endpoint(service->SessionId, service->Endpoint);
 
@@ -558,7 +577,8 @@ int rds_service_accept(rdsBackendService* service)
 		return 1;
 	}
 
-	AddEnabledDevice(GetNamePipeFileDescriptor(service->hServerPipe));
+	set_notify_fd(GetNamePipeFileDescriptor(service->hServerPipe));
+
 	service->hClientPipe = freerds_named_pipe_accept(hServerPipe);
 
 	g_clientfd = GetNamePipeFileDescriptor(service->hClientPipe);
@@ -566,7 +586,7 @@ int rds_service_accept(rdsBackendService* service)
 	g_connected = 1;
 	g_rdpScreen.fbAttached = 0;
 
-	AddEnabledDevice(g_clientfd);
+	set_notify_fd(g_clientfd);
 
 	fprintf(stderr, "RdsServiceAccept\n");
 
@@ -575,7 +595,7 @@ int rds_service_accept(rdsBackendService* service)
 
 int rds_service_disconnect(rdsBackendService* service)
 {
-	RemoveEnabledDevice(g_clientfd);
+	remove_notify_fd(g_clientfd);
 
 	CloseHandle(service->hClientPipe);
 	service->hClientPipe = NULL;
@@ -622,7 +642,7 @@ int rdp_init(void)
 		service->client->MouseEvent = rds_client_mouse_event;
 		service->client->ExtendedMouseEvent = rds_client_extended_mouse_event;
 		service->hServerPipe = freerds_named_pipe_create_endpoint(service->SessionId, service->Endpoint);
-		AddEnabledDevice(GetNamePipeFileDescriptor(service->hServerPipe));
+		set_notify_fd(GetNamePipeFileDescriptor(service->hServerPipe));
 	}
 
 	return 1;

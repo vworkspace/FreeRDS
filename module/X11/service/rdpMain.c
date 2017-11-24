@@ -216,7 +216,14 @@ Bool rdpSaveScreen(ScreenPtr pScreen, int on)
 	return TRUE;
 }
 
-#if (XORG_VERSION_CURRENT >= XORG_VERSION(1,13,0))
+#if (XORG_VERSION_CURRENT >= XORG_VERSION(1,19,0))
+static void rdpWakeupHandler(ScreenPtr pScreen, unsigned long result)
+{
+	pScreen->WakeupHandler = g_rdpScreen.WakeupHandler;
+	pScreen->WakeupHandler(pScreen, result);
+	pScreen->WakeupHandler = rdpWakeupHandler;
+}
+#elif (XORG_VERSION_CURRENT >= XORG_VERSION(1,13,0))
 static void rdpWakeupHandler(ScreenPtr pScreen, unsigned long result, pointer pReadmask)
 {
 	pScreen->WakeupHandler = g_rdpScreen.WakeupHandler;
