@@ -34,7 +34,7 @@ GIT_ROOT_DIR=~/git/vworkspace
 FREERDP_GIT=https://github.com/vworkspace/FreeRDP.git
 FREERDS_GIT=https://github.com/vworkspace/FreeRDS.git
 FREERDP_BRANCH=freerds-v2.0
-FREERDS_BRANCH=v2.0.1
+FREERDS_BRANCH=v2.0.2
 FREERDS_INSTALL_DIR=/opt/FreeRDS
 
 #
