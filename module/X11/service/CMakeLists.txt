@@ -17,6 +17,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+function (read_release valuename FROM filename INTO varname)
+  file (STRINGS ${filename} _distrib REGEX "^${valuename}=")
+  string (REGEX REPLACE "^${valuename}=\"?\(.*\)" "\\1" ${varname} "${_distrib}")
+  # remove trailing quote that got globbed by the wildcard (greedy match)
+  string (REGEX REPLACE "\"$" "" ${varname} "${${varname}}")
+  set (${varname} "${${varname}}" PARENT_SCOPE)
+endfunction (read_release valuename FROM filename INTO varname)
+
+
 project(Xrds)
 
 include(GNUInstallDirs)
@@ -86,19 +95,27 @@ endif()
 mark_as_advanced(XFONT_INCLUDE_DIR XFONT_LIBRARY)
 
 # Xfont2
+if(EXISTS "/etc/os-release")
+	#We prefer os-release as it is well formatted and
+	#standardised. Also, /etc/issue contains no version info on
+	#modern distros (e.g. CentOS7)
+	read_release(ID FROM /etc/os-release INTO DISTRO_ID)
+	read_release(VERSION_ID FROM /etc/os-release INTO DISTRO_RELEASE)
 
-find_path(XFONT2_INCLUDE_DIR NAMES X11/fonts/fontconf.h)
+	if(${DISTRO_ID} MATCHES "centos" AND ${DISTRO_RELEASE} MATCHES "7")
+		find_path(XFONT2_INCLUDE_DIR NAMES X11/fonts/fontconf.h)
 
-find_library(XFONT2_LIBRARY NAMES Xfont2)
+		find_library(XFONT2_LIBRARY NAMES Xfont2)
 
-find_package_handle_standard_args(xfont2 DEFAULT_MSG XFONT2_LIBRARY XFONT2_INCLUDE_DIR)
+		find_package_handle_standard_args(xfont2 DEFAULT_MSG XFONT2_LIBRARY XFONT2_INCLUDE_DIR)
 
-if(XFONT2_FOUND)
-	set(XFONT2_LIBRARIES ${XFONT2_LIBRARY})
-	set(XFONT2_INCLUDE_DIRS ${XFONT2_INCLUDE_DIR})
+		if(XFONT2_FOUND)
+			set(XFONT2_LIBRARIES ${XFONT2_LIBRARY})
+			set(XFONT2_INCLUDE_DIRS ${XFONT2_INCLUDE_DIR})
+		endif()
+		mark_as_advanced(XFONT2_INCLUDE_DIR XFONT2_LIBRARY)
+	endif()
 endif()
-
-mark_as_advanced(XFONT2_INCLUDE_DIR XFONT2_LIBRARY)
 
 # Xau
 
