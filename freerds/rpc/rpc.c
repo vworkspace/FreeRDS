@@ -37,6 +37,7 @@
 #define RDS_RPC_CONNECT_TIMEOUT		20
 #define RDS_RPC_CONNECT_RETRIES		10
 #define RDS_RPC_RECONNECT_INTERVAL	15000
+#define RDS_RPC_ACCEPT_CONNECT_DELAY    40
 
 static wLog* g_logger;
 
@@ -564,6 +565,7 @@ void* freerds_rpc_server_thread(void* arg)
 	while (1)
 	{
 		/* Accept a connection from the client. */
+		Sleep(RDS_RPC_ACCEPT_CONNECT_DELAY);
 		hClientPipe = freerds_rpc_named_pipe_accept(rpcServer->PipeName);
 
 		WLog_Print(g_logger, WLOG_TRACE, "accepted connection - hClientPipe=%p", hClientPipe);
